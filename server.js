@@ -1,8 +1,9 @@
 import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
+import { MongoClient } from 'mongodb';
 import Application from './src/Application';
 
-const oauthServer = require('./oauth/server.js')
+const oauthServer = require('./oauth/oauthServer.js')
 const DebugControl = require('./utilities/debug.js')
 
 
@@ -10,8 +11,15 @@ const context = Nullstack.start(Application);
 
 context.start = async function start() {
   // https://nullstack.app/application-startup
-}
+  const databaseClient = new MongoClient('mongodb://localhost:27017', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  await databaseClient.connect();
 
+  const database = await databaseClient.db('oauth');
+  context.database = database;
+}
 
 const { server } = context;
 
@@ -24,9 +32,12 @@ server.use('/oauth', require('./routes/auth.js')) // routes to access the auth s
 
 // Note that the next router uses middleware. That protects all routes within this middleware
 server.use('/secure', (req,res,next) => {
-  DebugControl.log.flow('Authentication')
-  return next()
-},oauthServer.authenticate(), require('./routes/secure.js')) // routes to access the protected stuff
+    DebugControl.log.flow('Authentication')
+    return next()
+  }
+  ,oauthServer.authenticate()
+  ,require('./routes/secure.js')
+) // routes to access the protected stuff
 server.use('/', (req,res) => res.redirect('/client'))
 
 export default context;

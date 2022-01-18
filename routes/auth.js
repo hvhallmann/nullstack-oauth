@@ -1,9 +1,7 @@
 const path = require('path') // has path and __dirname
 const express = require('express')
-const oauthServer = require('../oauth/server.js')
-
+const oauthServer = require('../oauth/oauthServer.js')
 const DebugControl = require('../utilities/debug.js')
-
 
 const router = express.Router() // Instantiate a new router
 

@@ -1,5 +1,6 @@
 // See https://oauth2-server.readthedocs.io/en/latest/model/spec.html for what you can do with this
-const crypto = require('crypto')
+const crypto = require('crypto');
+const mongo = require('mongodb');
 const db = { // Here is a fast overview of what your db model should look like
   authorizationCode: {
     authorizationCode: '', // A string that contains the code
@@ -24,8 +25,19 @@ const db = { // Here is a fast overview of what your db model should look like
 
 const DebugControl = require('../utilities/debug.js')
 
+let database;
+async function init() {
+  const databaseClient = new mongo.MongoClient('mongodb://localhost:27017', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  await databaseClient.connect();
+  database = await databaseClient.db('oauth');
+}
+init()
+
 module.exports = {
-  getClient: function (clientId, clientSecret) {
+  getClient: async function (clientId, clientSecret) {
     // query db for details with client
     log({
       title: 'Get Client',
@@ -34,6 +46,10 @@ module.exports = {
         { name: 'clientSecret', value: clientSecret },
       ]
     })
+
+    const existUser = await database.collection('client').find().toArray();;
+    console.log("user", existUser)
+
     db.client = { // Retrieved from the database
       clientId: clientId,
       clientSecret: clientSecret,
