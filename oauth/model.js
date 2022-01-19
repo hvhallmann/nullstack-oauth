@@ -22,7 +22,9 @@ export function generateModel(database) {
 
     getAuthorizationCode: async function(authorizationCode) {
       console.log('Getting Authorization Code ', authorizationCode)
-      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ authorizationCode })
+      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ 
+        authorizationCode
+       })
       if(!findAuthorizationCode) return false
 
       return findAuthorizationCode

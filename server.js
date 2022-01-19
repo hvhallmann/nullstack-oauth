@@ -78,6 +78,22 @@ server.post('/oauth/authorize', async (req, res, next) => {
   return handleResponse(req, res, response)
 })
 
+server.post('/oauth/token', async (req, res, next) => {
+  DebugControl.log.flow('Token')
+  next()
+}, async (req, res, next) => {
+  const request = new OAuth2Server.Request(req);
+  const response = new OAuth2Server.Response(res);
+  token = await oauth.token(request, response, {
+    requireClientAuthentication: { // whether client needs to provide client_secret
+      // 'authorization_code': false,
+    },
+  });
+  res.locals.oauth = { token: token };
+
+  return handleResponse(req, res, response)
+})
+
 // Note that the next router uses middleware. That protects all routes within this middleware
 server.use('/secure', (req,res,next) => {
     DebugControl.log.flow('Authentication')
