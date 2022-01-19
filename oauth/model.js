@@ -22,20 +22,20 @@ export function generateModel(database) {
 
     getAuthorizationCode: async function(authorizationCode) {
       console.log('Getting Authorization Code ', authorizationCode)
-      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ authorizationCode })
+      const code = await database.collection('authorizationTokens').findOne({ authorizationCode })
 
       const [findClient, findUser] = await Promise.all([
-        await database.collection('clients').findOne({ _id: findAuthorizationCode.clientId }),
-        await database.collection('users').findOne({ _id: findAuthorizationCode.userId })
+        await database.collection('clients').findOne({ _id: code.clientId }),
+        await database.collection('users').findOne({ _id: code.userId })
       ])
       
-      if(!findAuthorizationCode || !findClient || !findUser) return false
+      if(!code || !findClient || !findUser) return false
 
       return {
-        code: authorizationCode,
-        expiresAt: findAuthorizationCode.expiresAt,
-        redirectUri: findAuthorizationCode.redirectUri,
-        scope: findAuthorizationCode.scope,
+        code: code.authorizationCode,
+        expiresAt: code.expiresAt,
+        redirectUri: findClient.redirectUris[0],
+        scope: code.scope,
         client: {
           ...findClient,
           id: findClient._id.toString()
@@ -80,7 +80,7 @@ export function generateModel(database) {
 
     revokeAuthorizationCode: async function(authorizationCode) {
       console.log('Revoking Authorization Code ', authorizationCode)
-      const { deletedCount  } = await database.collection('authorizationTokens').deleteOne({ authorizationCode })
+      const { deletedCount  } = await database.collection('authorizationTokens').deleteOne({ authorizationCode: authorizationCode.code })
       return deletedCount === 1 
     },
     
@@ -114,14 +114,14 @@ export function generateModel(database) {
       console.log('client', client)
       console.log('user', user)
 
-      dbtoken = {
+      const dbtoken = {
         accessToken: token.accessToken,
         expiresAt: token.accessTokenExpiresAt,
         scope: token.scope,
         clientId: client.id,
         userId: user.id,
       }
-      refreshToken = {
+      const refreshToken = {
         refreshToken: token.refreshToken,
         expiresAt: token.refreshTokenExpiresAt,
         scope: token.scope,
@@ -141,12 +141,8 @@ export function generateModel(database) {
         database.collection('tokens').insertOne({ dbtoken }),
         database.collection('refreshTokens').insertOne({ refreshToken }),
       ]
-      const result = await Promise.all(fns).spread(function(accessToken, refreshToken) {
-          return { accessToken, refreshToken }
-        })
-      console.log('Token insert: ', result)
-
-      return dbtoken
+      const [accessResult, refreshResult] = await Promise.all(fns)
+      return { accessToken: dbtoken, refreshToken }
     },
 
     revokeToken: async (token) => {
