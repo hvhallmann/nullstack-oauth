@@ -22,26 +22,34 @@ export function generateModel(database) {
 
     getAuthorizationCode: async function(authorizationCode) {
       console.log('Getting Authorization Code ', authorizationCode)
-      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ 
-        authorizationCode
-       })
-      if(!findAuthorizationCode) return false
+      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ authorizationCode })
 
-      return findAuthorizationCode
+      const [findClient, findUser] = await Promise.all([
+        await database.collection('clients').findOne({ _id: findAuthorizationCode.clientId }),
+        await database.collection('users').findOne({ _id: findAuthorizationCode.userId })
+      ])
+      
+      if(!findAuthorizationCode || !findClient || !findUser) return false
+
+      return {
+        ...findAuthorizationCode,
+        client: findClient,
+        user: findUser,
+      }
     },
 
     saveAuthorizationCode: async (code, client, user) => {
       try {
 
         const { authorizationCode, expiresAt, redirectUri, scope } = code
-        const { _id: ClientId } = client
-        const { _id: UserId } = user
+        const { _id: clientId } = client
+        const { _id: userId } = user
 
         const newAuthorizationCode = {
           authorizationCode,
           expiresAt,
-          ClientId,
-          UserId
+          clientId,
+          userId
         }
         await database.collection('authorizationTokens').insertOne(newAuthorizationCode)
 
