@@ -80,12 +80,6 @@ export function generateModel(database) {
       return 'works!'
     },
 
-    getUser: async function() {
-      return 'works!'
-    },
-
-    // ---
-    
     saveToken: async function(token, client, user) {
       /* This is where you insert the token into the database */
       console.log('token', token)
@@ -150,6 +144,18 @@ export function generateModel(database) {
       let requestedScopes = scope.split(' ');
       let authorizedScopes = token.scope.split(' ');
       return requestedScopes.every(s => authorizedScopes.indexOf(s) >= 0);
+    },
+
+    // -- NOT MAIN FUNCTIONS ---
+
+    getUser: async function(username, password) {
+      const user = await database.collection('users').findOne({username, password})
+      return (user) ? user : false
+    },
+
+    getUserFromClient: async function(client) {
+      const user = await database.collection('users').findOne({_id: client.user_id})
+      return (user) ? user : false
     },
 
   }
