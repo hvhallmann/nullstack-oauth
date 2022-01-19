@@ -20,10 +20,18 @@ export function generateModel(database) {
       return client
     },
 
+    getAuthorizationCode: async function(authorizationCode) {
+      console.log('Getting Authorization Code ', authorizationCode)
+      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ 
+        authorizationCode
+       })
+      if(!findAuthorizationCode) return false
+
+      return findAuthorizationCode
+    },
+
     saveAuthorizationCode: async (code, client, user) => {
       try {
-
-        //TODO: Cleanup old codes
 
         const { authorizationCode, expiresAt, redirectUri, scope } = code
         const { _id: ClientId } = client
@@ -50,6 +58,12 @@ export function generateModel(database) {
         return false;
       }
     },
+
+    revokeAuthorizationCode: async function(authorizationCode) {
+      console.log('Revoking Authorization Code ', authorizationCode)
+      const { deletedCount  } = await database.collection('authorizationTokens').deleteOne({ authorizationCode })
+      return deletedCount === 1 
+    },
     
     getAccessToken: async function(token) {
       if (!token || token === 'undefined') return false
@@ -73,11 +87,6 @@ export function generateModel(database) {
           user: user
         };
       });
-    },
-
-    getAuthorizationCode: async function() {
-      console.log('getting auth code')
-      return 'works!'
     },
 
     saveToken: async function(token, client, user) {

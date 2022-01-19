@@ -25,7 +25,7 @@
   let token // TODO: DON'T STORE THE TOKEN ON THE CLIENT FRONT END!!! Put it in a session cookie or something to be more secure
   let tokenType
   let refreshToken
-  const secret = 'MYSECRET' // probs shouldn't be stored locally on the frontend
+  const secret = '12345678' // probs shouldn't be stored locally on the frontend
   const id = 'myClientId'  // probs shouldn't be stored locally on the frontend
   ;(function(){ // We are immediately executing this anonymous function. The semi-colon is necessary
     const urlParams = new URLSearchParams(window.location.search) // retrieve the authorization code from the url
