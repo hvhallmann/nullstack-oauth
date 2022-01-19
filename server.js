@@ -27,6 +27,29 @@ server.use(bodyParser.urlencoded({ extended: false }));
 server.use(bodyParser.json());
 
 server.use('/client', require('./routes/client.js')) // Client routes
+
+server.post('/oauth/authorize', async (req, res, next) => {
+
+  DebugControl.log.flow('Initial User Authentication')
+  const { username, password } = req.body
+
+  const user = await context.database.collection('clients').findOne({ username, password })
+  if(user) {
+    req.body.user = user
+    return next()
+  }
+  const params = [ // Send params back down
+    'client_id',
+    'redirect_uri',
+    'response_type',
+    'grant_type',
+    'state',
+  ]
+    .map(a => `${a}=${req.body[a]}`)
+    .join('&')
+  return res.redirect(`/oauth?success=false&${params}`)
+})
+
 server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
 
 
