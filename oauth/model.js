@@ -27,14 +27,40 @@ export function generateModel(database) {
   return {
     getClient: async function(clientId, clientSecret) {
       console.log('Getting Client... ', { clientId, clientSecret })
-      // const client = await database.collection('clients').findOne({ clientId, clientSecret });
-      const client = await database.collection('clients').findOne({ clientId });
+      const client = await database.collection('clients').findOne({ 
+        clientId,
+        ...(clientSecret ? {clientSecret} : null)
+      });
       console.log('Client found: ', client)
       return client
     },
 
-    saveAuthorizationCode: (code, client, user) => {
-      console.log('Saving Authorization Code')
+    saveAuthorizationCode: async (code, client, user) => {
+      try {
+        const { authorizationCode, expiresAt, redirectUri, scope } = code
+        const { _id: ClientId } = client
+        const { _id: UserId } = user
+
+        const newAuthorizationCode = {
+          authorizationCode,
+          expiresAt,
+          ClientId,
+          UserId
+        }
+        await database.collection('authorizationTokens').insertOne(newAuthorizationCode)
+
+        return {
+          authorizationCode,
+          expiresAt,
+          redirectUri,
+          scope,
+          client,
+          user
+        }
+      } catch (error) {
+        console.log(error)
+        return false;
+      }
     },
     
     getAccessToken: async function(clientId, clientSecret) {

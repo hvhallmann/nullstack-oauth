@@ -70,8 +70,8 @@ server.post('/oauth/authorize', async (req, res, next) => {
       }
     }
   })
-  console.log(code)
-  return
+  res.locals.oauth = { token: code };
+  next()
 })
 
 server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
