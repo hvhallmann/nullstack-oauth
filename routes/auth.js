@@ -12,18 +12,15 @@ router.get('/', (req,res) => {  // send back a simple form for the oauth
 })
 
 
-router.post('/authorize', (req,res, next) => { // sends us to our redirect with an authorization code in our url
-  DebugControl.log.flow('Authorization')
-  return next()
-}, oauthServer.authorize({
-  authenticateHandler: {
-    handle: req => {
-      DebugControl.log.functionName('Authenticate Handler')
-      DebugControl.log.parameters(Object.keys(req.body).map(k => ({name: k, value: req.body[k]})))
-      return req.body.user
-    }
-  }
-}))
+// router.post('/authorize', oauthServer.authorize({
+//   authenticateHandler: {
+//     handle: req => {
+//       DebugControl.log.functionName('Authenticate Handler')
+//       DebugControl.log.parameters(Object.keys(req.body).map(k => ({name: k, value: req.body[k]})))
+//       return req.body.user
+//     }
+//   }
+// }))
 
 router.post('/token', (req,res,next) => {
   DebugControl.log.flow('Token')
