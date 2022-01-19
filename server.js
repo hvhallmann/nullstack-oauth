@@ -34,6 +34,7 @@ server.use(bodyParser.urlencoded({ extended: false }));
 server.use(bodyParser.json());
 
 server.use('/client', require('./routes/client.js')) // Client routes
+server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
 
 server.post('/oauth/authorize', async (req, res, next) => {
 
