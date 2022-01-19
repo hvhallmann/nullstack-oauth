@@ -1,31 +1,7 @@
-/* mongoose.model('OAuthTokens', new Schema({
-  accessToken: { type: String },
-  accessTokenExpiresOn: { type: Date },
-  client : { type: Object },  // `client` and `user` are required in multiple places, for example `getAccessToken()`
-  clientId: { type: String },
-  refreshToken: { type: String },
-  refreshTokenExpiresOn: { type: Date },
-  user : { type: Object },
-  userId: { type: String },
-}));
-
-mongoose.model('OAuthClients', new Schema({
-  clientId: { type: String },
-  clientSecret: { type: String },
-  redirectUris: { type: Array }
-}));
-
-mongoose.model('OAuthUsers', new Schema({
-  email: { type: String, default: '' },
-  firstname: { type: String },
-  lastname: { type: String },
-  password: { type: String },
-  username: { type: String }
-})); */
-
 import Ajv from 'ajv';
 const ajv = new Ajv()
 import { tokens, refreshTokens } from '../src/schema/db.njs';
+import { ObjectId } from 'mongodb'
 
 
 const validateToken = ajv.compile(tokens)
@@ -75,8 +51,28 @@ export function generateModel(database) {
       }
     },
     
-    getAccessToken: async function(clientId, clientSecret) {
-      return 'works!'
+    getAccessToken: async function(token) {
+      if (!token || token === 'undefined') return false
+      console.log('token', token)
+
+      const dbToken = await database.collection('tokens').findOne({ 
+        accessToken
+      });
+
+      return Promise.all([
+        dbToken,
+        database.collection('clients').findOne({clientId: ObjectId(dbToken.clientId)}),
+        database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
+      ])
+      .spread(function(tok, client, user) {
+        return {
+          accessToken: tok.access_token,
+          accessTokenExpiresAt: tok.expires_at,
+          scope: tok.scope,
+          client: client, // with 'id' property
+          user: user
+        };
+      });
     },
 
     getAuthorizationCode: async function() {
@@ -133,15 +129,27 @@ export function generateModel(database) {
 
     revokeToken: async (token) => {
       /* Delete the token from the database */
-      log({
-        title: 'Revoke Token',
-        parameters: [
-          { name: 'token', value: token },
-        ]
-      })
       console.log('revoke token', token)
       if (!token || token === 'undefined') return false
-      return new Promise(resolve => resolve(true))
+
+      const response = await database.collection('refreshTokens').deleteOne({ 
+        refreshToken: token.refreshToken
+      });
+
+      return (response.deletedCount > 0) ? true : false
+    },
+
+    verifyScope: async (token, scope) => {
+      /* This is where we check to make sure the client has access to this scope */
+      console.log('scope', scope)
+      if (!token || token === 'undefined') return false
+
+      if (!token.scope) {
+        return false;
+      }
+      let requestedScopes = scope.split(' ');
+      let authorizedScopes = token.scope.split(' ');
+      return requestedScopes.every(s => authorizedScopes.indexOf(s) >= 0);
     },
 
   }
