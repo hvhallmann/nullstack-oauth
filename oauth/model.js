@@ -139,5 +139,18 @@ export function generateModel(database) {
       return (response.deletedCount > 0) ? true : false
     },
 
+    verifyScope: async (token, scope) => {
+      /* This is where we check to make sure the client has access to this scope */
+      console.log('scope', scope)
+      if (!token || token === 'undefined') return false
+
+      if (!token.scope) {
+        return false;
+      }
+      let requestedScopes = scope.split(' ');
+      let authorizedScopes = token.scope.split(' ');
+      return requestedScopes.every(s => authorizedScopes.indexOf(s) >= 0);
+    },
+
   }
 }
