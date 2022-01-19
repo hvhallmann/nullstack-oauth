@@ -32,9 +32,18 @@ export function generateModel(database) {
       if(!findAuthorizationCode || !findClient || !findUser) return false
 
       return {
-        ...findAuthorizationCode,
-        client: findClient,
-        user: findUser,
+        code: authorizationCode,
+        expiresAt: findAuthorizationCode.expiresAt,
+        redirectUri: findAuthorizationCode.redirectUri,
+        scope: findAuthorizationCode.scope,
+        client: {
+          ...findClient,
+          id: findClient._id.toString()
+        },
+        user: {
+          ...findUser,
+          id: findUser._id.toString()
+        },
       }
     },
 
@@ -48,6 +57,8 @@ export function generateModel(database) {
         const newAuthorizationCode = {
           authorizationCode,
           expiresAt,
+          redirectUri,
+          scope,
           clientId,
           userId
         }

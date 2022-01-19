@@ -31,8 +31,10 @@ export const authorizationCode = {
   properties: {
     authorizationCode: { type: 'string' },
     expiresAt: { type: 'timestamp' },
-    ClientId: { type: 'string' },
-    UserId: { type: 'string' },
+    redirectUri: { type: 'string' },
+    scope: { type: 'string' },
+    clientId: { type: 'string' },
+    userId: { type: 'string' },
   }
 }
 
