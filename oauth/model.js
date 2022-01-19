@@ -16,8 +16,10 @@ export function generateModel(database) {
         clientId,
         ...(clientSecret ? {clientSecret} : null)
       });
-      console.log('Client found: ', client)
-      return client
+      return {
+        ...client,
+        id: client._id.toString()
+      }
     },
 
     getAuthorizationCode: async function(authorizationCode) {
