@@ -84,7 +84,7 @@ server.post('/oauth/token', async (req, res, next) => {
 }, async (req, res, next) => {
   const request = new OAuth2Server.Request(req);
   const response = new OAuth2Server.Response(res);
-  token = await oauth.token(request, response, {
+  const token = await oauth.token(request, response, {
     requireClientAuthentication: { // whether client needs to provide client_secret
       // 'authorization_code': false,
     },
