@@ -40,10 +40,20 @@ export const tokens = {
   type: 'object',
   properties: {
     accessToken: { type: 'string' },
-    accessTokenExpiresOn: { type: 'timestamp' },
+    expiresAt: { type: 'string' },
     clientId: { type: 'string' },
+    scope: { type: 'string' },
+    userId: { type: 'string' },
+  }
+}
+
+export const refreshTokens = {
+  type: 'object',
+  properties: {
     refreshToken: { type: 'string' },
-    refreshTokenExpiresOn: { type: 'timestamp' },
+    expiresAt: { type: 'string' },
+    clientId: { type: 'string' },
+    scope: { type: 'string' },
     userId: { type: 'string' },
   }
 }

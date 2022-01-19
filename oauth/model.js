@@ -23,6 +23,15 @@ mongoose.model('OAuthUsers', new Schema({
   username: { type: String }
 })); */
 
+import Ajv from 'ajv';
+const ajv = new Ajv()
+import { tokens, refreshTokens } from '../src/schema/db.njs';
+
+
+const validateToken = ajv.compile(tokens)
+const validateRefreshToken = ajv.compile(refreshTokens)
+
+
 export function generateModel(database) {  
   return {
     getClient: async function(clientId, clientSecret) {
@@ -97,6 +106,15 @@ export function generateModel(database) {
         clientId: client.id,
         userId: user.id
       }
+
+      const validToken = validateToken(dbtoken)
+      const validRefreshToken = validateRefreshToken(refreshToken)
+
+      console.log(validToken && validRefreshToken && 'is valid' || 'not valid');
+
+      if (!validToken) console.log(validateToken.errors) 
+      if (!validRefreshToken) console.log(validateRefreshToken.errors) 
+
       const fns = [
         database.collection('tokens').insertOne({ dbtoken }),
         database.collection('refreshTokens').insertOne({ refreshToken }),
