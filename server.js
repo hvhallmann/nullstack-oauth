@@ -26,7 +26,6 @@ context.start = async function start() {
   context.database = database;
 
   oauth = new OAuth2Server({model: generateModel(database)})
-
 }
 
 const { server } = context;
