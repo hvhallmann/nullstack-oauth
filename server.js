@@ -8,6 +8,8 @@ const DebugControl = require('./utilities/debug.js')
 
 import { generateModel } from './oauth/model'
 import OAuth2Server from 'oauth2-server'
+import { handleResponse } from './src/utils/handleResponse.njs'
+
 let oauth
 
 const context = Nullstack.start(Application);
@@ -70,12 +72,10 @@ server.post('/oauth/authorize', async (req, res, next) => {
       }
     }
   })
-  res.locals.oauth = { token: code };
-  next()
+  res.locals.oauth = {code: code};
+
+  return handleResponse(req, res, response)
 })
-
-server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
-
 
 // Note that the next router uses middleware. That protects all routes within this middleware
 server.use('/secure', (req,res,next) => {

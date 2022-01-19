@@ -22,6 +22,9 @@ export function generateModel(database) {
 
     saveAuthorizationCode: async (code, client, user) => {
       try {
+
+        //TODO: Cleanup old codes
+
         const { authorizationCode, expiresAt, redirectUri, scope } = code
         const { _id: ClientId } = client
         const { _id: UserId } = user
@@ -73,6 +76,7 @@ export function generateModel(database) {
     },
 
     getAuthorizationCode: async function() {
+      console.log('getting auth code')
       return 'works!'
     },
 
