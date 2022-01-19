@@ -33,8 +33,25 @@ export function generateModel(database) {
       return client
     },
 
-    saveAuthorizationCode: (code, client, user) => {
-      console.log('Saving Authorization Code')
+    saveAuthorizationCode: async (code, client, user) => {
+      try {
+        const { authorizationCode, expiresAt, redirectUri } = code //scope is optional?
+        const { _id: ClientId } = client
+        const { _id: UserId } = user
+
+        const newAuthorizationCode = {
+          authorizationCode,
+          expiresAt,
+          redirectUri,
+          ClientId,
+          UserId
+        }
+        await database.collection('authorizationTokens').insertOne(newAuthorizationCode)
+        return newAuthorizationCode
+      } catch (error) {
+        console.log(error)
+        return false;
+      }
     },
     
     getAccessToken: async function(clientId, clientSecret) {
