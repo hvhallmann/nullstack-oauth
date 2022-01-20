@@ -42,10 +42,15 @@ export const tokens = {
   type: 'object',
   properties: {
     accessToken: { type: 'string' },
-    expiresAt: { type: 'string' },
-    clientId: { type: 'string' },
-    scope: { type: 'string' },
-    userId: { type: 'string' },
+    expiresAt: {
+      type: 'object',
+      propertyNames: {
+        format: "date-time"
+      }
+    },
+    clientId: { type: 'object' },
+    scope: { type: 'string', "nullable": true },
+    userId: { type: 'object' },
   }
 }
 
@@ -53,9 +58,14 @@ export const refreshTokens = {
   type: 'object',
   properties: {
     refreshToken: { type: 'string' },
-    expiresAt: { type: 'string' },
-    clientId: { type: 'string' },
-    scope: { type: 'string' },
-    userId: { type: 'string' },
+    expiresAt: {
+      type: 'object',
+      propertyNames: {
+        format: "date-time"
+      }
+    },
+    clientId: { type: 'object' },
+    scope: { type: 'string', "nullable": true },
+    userId: { type: 'object' },
   }
 }

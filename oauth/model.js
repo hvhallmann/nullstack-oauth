@@ -1,8 +1,10 @@
 import Ajv from 'ajv';
-const ajv = new Ajv()
+import addFormats from "ajv-formats";
 import { tokens, refreshTokens } from '../src/schema/db.njs';
 import { ObjectId } from 'mongodb'
 
+const ajv = new Ajv()
+addFormats(ajv)
 
 const validateToken = ajv.compile(tokens)
 const validateRefreshToken = ajv.compile(refreshTokens)
@@ -124,7 +126,6 @@ export function generateModel(database) {
 
     getRefreshToken: async function(refreshToken) {
       if (!refreshToken || refreshToken === 'undefined') return false
-      console.log('refreshToken', refreshToken)
 
       const dbToken = await database.collection('refreshTokens').findOne({ 
         refreshToken
@@ -148,10 +149,6 @@ export function generateModel(database) {
 
     saveToken: async function(token, client, user) {
       /* This is where you insert the token into the database */
-      console.log('token', token)
-      console.log('client', client)
-      console.log('user', user)
-
       const dbtoken = {
         accessToken: token.accessToken,
         expiresAt: token.accessTokenExpiresAt,
@@ -166,16 +163,13 @@ export function generateModel(database) {
         clientId: client._id,
         userId: user._id
       }
-
       const validToken = validateToken(dbtoken)
       const validRefreshToken = validateRefreshToken(refreshToken)
 
       console.log(validToken && validRefreshToken && 'is valid' || 'not valid');
 
-      if (!validToken) console.log(validateToken.errors) 
-      if (!validRefreshToken) console.log(validateRefreshToken.errors) 
-
-      console.log('my7 refreshToken is', refreshToken)
+      if (!validToken) console.error('token not valid', validateToken.errors)
+      if (!validRefreshToken) console.error('refresh not valid', validateRefreshToken.errors)
 
       const fns = [
         database.collection('tokens').insertOne({ ...dbtoken }),

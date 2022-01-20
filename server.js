@@ -3,7 +3,6 @@ import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
 import Application from './src/Application';
 
-const oauthServer = require('./oauth/oauthServer.js')
 const DebugControl = require('./utilities/debug.js')
 
 import { generateModel } from './oauth/model'
