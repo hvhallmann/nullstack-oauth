@@ -27,7 +27,7 @@ class Application extends Nullstack {
         <Head />
         <Home route="/" />
 
-        <HelloWorld route="/hello" />
+        <HelloWorld route="/success" />
       </main>
     );
   }

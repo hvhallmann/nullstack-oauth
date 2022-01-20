@@ -12,7 +12,12 @@ class HelloWorld extends Nullstack {
       <div>
         {" "}
         Hello Worldz
-        <button onclick={this.increment}>{this.count} ow</button>;
+        <div>
+          <button onclick={this.increment}>[ + ]</button>;
+        </div>
+        <div>
+          <span>{this.count} ows</span>  
+        </div>
       </div>
     );
   }
