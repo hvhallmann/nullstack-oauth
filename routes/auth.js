@@ -9,8 +9,4 @@ router.get('/', (req,res) => {  // send back a simple form for the oauth
   res.sendFile(filePath)
 })
 
-<<<<<<< HEAD
-
-=======
->>>>>>> ad57079cd81e54e8fefb31990dac21e192ea7abf
 module.exports = router
