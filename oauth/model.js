@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import addFormats from "ajv-formats";
-import { tokens, refreshTokens } from '../src/schema/db.njs';
+import { tokens, refreshTokens, authorizationTokens } from '../src/schema/db.njs';
 import { ObjectId } from 'mongodb'
 
 const ajv = new Ajv()
@@ -8,6 +8,7 @@ addFormats(ajv)
 
 const validateToken = ajv.compile(tokens)
 const validateRefreshToken = ajv.compile(refreshTokens)
+const validateAuthTokens = ajv.compile(authorizationTokens)
 
 
 export function generateModel(database) {  
@@ -74,6 +75,10 @@ export function generateModel(database) {
           clientId,
           userId
         }
+
+        const validAuthToken = validateAuthTokens(newAuthorizationCode)
+        if (!validAuthToken) console.error('Authorization Token not valid', validateAuthTokens.errors)
+
         await database.collection('authorizationTokens').insertOne(newAuthorizationCode)
 
         return {
@@ -169,8 +174,6 @@ export function generateModel(database) {
       }
       const validToken = validateToken(dbtoken)
       const validRefreshToken = validateRefreshToken(refreshToken)
-
-      console.log(validToken && validRefreshToken && 'is valid' || 'not valid');
 
       if (!validToken) console.error('token not valid', validateToken.errors)
       if (!validRefreshToken) console.error('refresh not valid', validateRefreshToken.errors)
