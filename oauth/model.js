@@ -131,20 +131,24 @@ export function generateModel(database) {
         refreshToken
       });
 
-      return Promise.all([
+      const [findToken, findClient, findUser] = await Promise.all([
         dbToken,
         database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
         database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
       ])
-      .then(function([tok, client, user]) {
-        return {
-          refreshToken: tok.refreshToken,
-          refreshTokenExpiresAt: tok.expiresAt,
-          scope: tok.scope,
-          client: client, // with 'id' property
-          user: user
-        };
-      });
+      return {
+        refreshToken: findToken.refreshToken,
+        refreshTokenExpiresAt: findToken.expiresAt,
+        scope: findToken.scope,
+        client: {
+          ...findClient,
+          id: findClient._id.toString()
+        },
+        user: {
+          ...findUser,
+          id: findUser._id.toString()
+        }
+      };
     },
 
     saveToken: async function(token, client, user) {
