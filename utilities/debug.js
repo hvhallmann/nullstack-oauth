@@ -23,7 +23,7 @@ module.exports = {
     },
     flow: flow => {
       if(levels.LOW > level) return
-      console.log(`\n\n\nBEGIN FLOW: ${flow}\n\n\n`)
+      console.log(`\n\nBEGIN FLOW: ${flow}\n\n`)
     },
     variable: ({name, value}) => {
       if(levels.HIGH > level) return
