@@ -3,9 +3,8 @@ import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
 import Application from './src/Application';
 
-const DebugControl = require('./utilities/debug.js')
-
 import OAuth2Server from 'oauth2-server'
+import OAuthConfig from './src/config/oauth.njs'
 import { generateModel } from './oauth/model'
 import { handleResponse } from './src/utils/handleResponse.njs'
 import { handleError } from './src/utils/handleError.njs'
@@ -22,15 +21,12 @@ context.start = async function start() {
   });
   await databaseClient.connect();
 
-  const database = await databaseClient.db('oauth');
+  const database = databaseClient.db('oauth');
   context.database = database;
 
   oauth = new OAuth2Server({
     model: generateModel(database),
-    grants: ['authorization_code', 'refresh_token'],
-    accessTokenLifetime: 60 * 60 * 4, // 4 hours
-    allowEmptyState: true,
-    allowExtendedTokenAttributes: true,
+    ...OAuthConfig
   })
 }
 
@@ -44,7 +40,6 @@ server.use('/oauth', require('./routes/auth.js')) // routes to access the auth s
 
 server.post('/oauth/authorize', async (req, res, next) => {
 
-  DebugControl.log.flow('Initial User Authentication')
   const { username, password } = req.body
   const user = await context.database.collection('users').findOne({ username, password })
   if(user) {
@@ -65,27 +60,29 @@ server.post('/oauth/authorize', async (req, res, next) => {
 
 }, async (req, res, next) => {
 
-  DebugControl.log.flow('Authorization')
-
   const request = new OAuth2Server.Request(req);
   const response = new OAuth2Server.Response(res);
   
-  const code = await oauth.authorize(request, response, {
-    authenticateHandler: {
-      handle: req => {
-        DebugControl.log.functionName('Authenticate Handler')
-        DebugControl.log.parameters(Object.keys(req.body).map(k => ({name: k, value: req.body[k]})))
-        return req.body.user
+  try {
+    const code = await oauth.authorize(request, response, {
+      authenticateHandler: {
+        handle: req => {
+          console.log('Authenticate Handler')
+          console.log(Object.keys(req.body).map(k => ({name: k, value: req.body[k]})))
+          return req.body.user
+        }
       }
-    }
-  })
-  res.locals.oauth = {code: code};
+    })
+    res.locals.oauth = {code: code};
 
-  return handleResponse(req, res, response)
+    return handleResponse(req, res, response)
+  } catch (err) {
+    return handleError(err, req, res, response, next)
+  }
+  
 })
 
 server.post('/oauth/token', async (req, res, next) => {
-  DebugControl.log.flow('Token')
   next()
 }, async (req, res, next) => {
   const request = new OAuth2Server.Request(req);
@@ -103,10 +100,8 @@ server.post('/oauth/token', async (req, res, next) => {
   }
   
 })
-
 // Note that the next router uses middleware. That protects all routes within this middleware
 server.use('/secure', (req,res,next) => {
-    DebugControl.log.flow('Authentication')
     return next()
   }, 
   async (req, res, next) => {
@@ -116,14 +111,13 @@ server.use('/secure', (req,res,next) => {
     try {
       const token = await oauth.authenticate(request, response, {})
       res.locals.oauth = { token: token };
-      console.log(token)
       next();
     } catch (err) {
       return handleError(err, req, res, response, next)
     }
   },
   require('./routes/secure.js')
-) // routes to access the protected stuff
+)
 
 server.use('/', (req,res) => res.redirect('/client'))
 
