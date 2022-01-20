@@ -98,10 +98,18 @@ server.post('/oauth/token', async (req, res, next) => {
 server.use('/secure', (req,res,next) => {
     DebugControl.log.flow('Authentication')
     return next()
-  }
-  ,oauthServer.authenticate()
-  ,require('./routes/secure.js')
+  }, 
+  async (req, res, next) => {
+    const request = new OAuth2Server.Request(req)
+    const response = new OAuth2Server.Response(res)
+    const token = await oauth.authenticate(request, response, {})
+    res.locals.oauth = { token: token };
+    console.log(token)
+    next();
+  },
+  require('./routes/secure.js')
 ) // routes to access the protected stuff
+
 server.use('/', (req,res) => res.redirect('/client'))
 
 export default context;

@@ -96,26 +96,30 @@ export function generateModel(database) {
     
     getAccessToken: async function(token) {
       if (!token || token === 'undefined') return false
-      console.log('token', token)
 
       const dbToken = await database.collection('tokens').findOne({ 
-        accessToken
+        accessToken: token
       });
 
-      return Promise.all([
+      const [findToken, findClient, findUser] = await Promise.all([
         dbToken,
         database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
         database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
       ])
-      .then(function([tok, client, user]) {
-        return {
-          accessToken: tok.access_token,
-          accessTokenExpiresAt: tok.expires_at,
-          scope: tok.scope,
-          client: client, // with 'id' property
-          user: user
-        };
-      });
+
+      return {
+        accessToken: findToken.accessToken,
+        accessTokenExpiresAt: findToken.expiresAt,
+        scope: findToken.scope,
+        client: {
+          id: findClient._id.toString(),
+          ...findClient
+        },
+        user: {
+          id: findUser._id.toString(),
+          ...findUser
+        },
+      }
     },
 
     getRefreshToken: async function(refreshToken) {
