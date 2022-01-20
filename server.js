@@ -3,11 +3,10 @@ import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
 import Application from './src/Application';
 
-const oauthServer = require('./oauth/oauthServer.js')
 const DebugControl = require('./utilities/debug.js')
 
-import { generateModel } from './oauth/model'
 import OAuth2Server from 'oauth2-server'
+import { generateModel } from './oauth/model'
 import { handleResponse } from './src/utils/handleResponse.njs'
 import { handleError } from './src/utils/handleError.njs'
 
@@ -26,7 +25,13 @@ context.start = async function start() {
   const database = await databaseClient.db('oauth');
   context.database = database;
 
-  oauth = new OAuth2Server({model: generateModel(database)})
+  oauth = new OAuth2Server({
+    model: generateModel(database),
+    grants: ['authorization_code', 'refresh_token'],
+    accessTokenLifetime: 60 * 60 * 4, // 4 hours
+    allowEmptyState: true,
+    allowExtendedTokenAttributes: true,
+  })
 }
 
 const { server } = context;
@@ -107,10 +112,15 @@ server.use('/secure', (req,res,next) => {
   async (req, res, next) => {
     const request = new OAuth2Server.Request(req)
     const response = new OAuth2Server.Response(res)
-    const token = await oauth.authenticate(request, response, {})
-    res.locals.oauth = { token: token };
-    console.log(token)
-    next();
+
+    try {
+      const token = await oauth.authenticate(request, response, {})
+      res.locals.oauth = { token: token };
+      console.log(token)
+      next();
+    } catch (err) {
+      return handleError(err, req, res, response, next)
+    }
   },
   require('./routes/secure.js')
 ) // routes to access the protected stuff
