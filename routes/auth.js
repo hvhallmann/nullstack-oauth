@@ -22,14 +22,14 @@ router.get('/', (req,res) => {  // send back a simple form for the oauth
 //   }
 // }))
 
-router.post('/token', (req,res,next) => {
-  DebugControl.log.flow('Token')
-  next()
-},oauthServer.token({
-  requireClientAuthentication: { // whether client needs to provide client_secret
-    // 'authorization_code': false,
-  },
-}))  // Sends back token
+// router.post('/token', (req,res,next) => {
+//   DebugControl.log.flow('Token')
+//   next()
+// },oauthServer.token({
+//   requireClientAuthentication: { // whether client needs to provide client_secret
+//     // 'authorization_code': false,
+//   },
+// }))  // Sends back token
 
 
 module.exports = router

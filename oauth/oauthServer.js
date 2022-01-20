@@ -63,31 +63,31 @@ ExpressOAuthServer.prototype.authenticate = function(options) {
  * (See: https://tools.ietf.org/html/rfc6749#section-3.1)
  */
 
-ExpressOAuthServer.prototype.authorize = function(options) {
-  var that = this;
+// ExpressOAuthServer.prototype.authorize = function(options) {
+//   var that = this;
 
-  return function(req, res, next) {
-    var request = new Request(req);
-    var response = new Response(res);
+//   return function(req, res, next) {
+//     var request = new Request(req);
+//     var response = new Response(res);
 
-    return Promise.bind(that)
-      .then(function() {
-        return this.server.authorize(request, response, options);
-      })
-      .tap(function(code) {
-        res.locals.oauth = { code: code };
-        if (this.continueMiddleware) {
-          next();
-        }
-      })
-      .then(function() {
-        return handleResponse.call(this, req, res, response);
-      })
-      .catch(function(e) {
-        return handleError.call(this, e, req, res, response, next);
-      });
-  };
-};
+//     return Promise.bind(that)
+//       .then(function() {
+//         return this.server.authorize(request, response, options);
+//       })
+//       .tap(function(code) {
+//         res.locals.oauth = { code: code };
+//         if (this.continueMiddleware) {
+//           next();
+//         }
+//       })
+//       .then(function() {
+//         return handleResponse.call(this, req, res, response);
+//       })
+//       .catch(function(e) {
+//         return handleError.call(this, e, req, res, response, next);
+//       });
+//   };
+// };
 
 /**
  * Grant Middleware.
@@ -126,18 +126,20 @@ ExpressOAuthServer.prototype.token = function(options) {
 /**
  * Handle response.
  */
-var handleResponse = function(req, res, response) {
+// MODEV TO utils/handleResponse.njs
 
-  if (response.status === 302) {
-    var location = response.headers.location;
-    delete response.headers.location;
-    res.set(response.headers);
-    res.redirect(location);
-  } else {
-    res.set(response.headers);
-    res.status(response.status).send(response.body);
-  }
-};
+// var handleResponse = function(req, res, response) {
+
+//   if (response.status === 302) {
+//     var location = response.headers.location;
+//     delete response.headers.location;
+//     res.set(response.headers);
+//     res.redirect(location);
+//   } else {
+//     res.set(response.headers);
+//     res.status(response.status).send(response.body);
+//   }
+// };
 
 /**
  * Handle error.

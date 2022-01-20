@@ -25,8 +25,9 @@
   let token // TODO: DON'T STORE THE TOKEN ON THE CLIENT FRONT END!!! Put it in a session cookie or something to be more secure
   let tokenType
   let refreshToken
-  const secret = 'MYSECRET' // probs shouldn't be stored locally on the frontend
+  const secret = '12345678' // probs shouldn't be stored locally on the frontend
   const id = 'myClientId'  // probs shouldn't be stored locally on the frontend
+  const redirect = 'http://localhost:3000/client/app'
   ;(function(){ // We are immediately executing this anonymous function. The semi-colon is necessary
     const urlParams = new URLSearchParams(window.location.search) // retrieve the authorization code from the url
     code = urlParams.get('code')
@@ -36,7 +37,7 @@
 
     fetch('/oauth/token', {
       method: 'POST',
-      body: `code=${code}&client_secret=${secret}&client_id=${id}&grant_type=authorization_code`, // this is how we send that data up
+      body: `code=${code}&client_secret=${secret}&client_id=${id}&grant_type=authorization_code&redirect_uri=${redirect}`, // this is how we send that data up
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',  // This is REALLY important
       },

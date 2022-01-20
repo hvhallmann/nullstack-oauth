@@ -8,6 +8,8 @@ const DebugControl = require('./utilities/debug.js')
 
 import { generateModel } from './oauth/model'
 import OAuth2Server from 'oauth2-server'
+import { handleResponse } from './src/utils/handleResponse.njs'
+
 let oauth
 
 const context = Nullstack.start(Application);
@@ -24,7 +26,6 @@ context.start = async function start() {
   context.database = database;
 
   oauth = new OAuth2Server({model: generateModel(database)})
-
 }
 
 const { server } = context;
@@ -33,6 +34,7 @@ server.use(bodyParser.urlencoded({ extended: false }));
 server.use(bodyParser.json());
 
 server.use('/client', require('./routes/client.js')) // Client routes
+server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
 
 server.post('/oauth/authorize', async (req, res, next) => {
 
@@ -71,21 +73,43 @@ server.post('/oauth/authorize', async (req, res, next) => {
       }
     }
   })
-  res.locals.oauth = { token: code };
-  next()
+  res.locals.oauth = {code: code};
+
+  return handleResponse(req, res, response)
 })
 
-server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
+server.post('/oauth/token', async (req, res, next) => {
+  DebugControl.log.flow('Token')
+  next()
+}, async (req, res, next) => {
+  const request = new OAuth2Server.Request(req);
+  const response = new OAuth2Server.Response(res);
+  const token = await oauth.token(request, response, {
+    requireClientAuthentication: { // whether client needs to provide client_secret
+      // 'authorization_code': false,
+    },
+  });
+  res.locals.oauth = { token: token };
 
+  return handleResponse(req, res, response)
+})
 
 // Note that the next router uses middleware. That protects all routes within this middleware
 server.use('/secure', (req,res,next) => {
     DebugControl.log.flow('Authentication')
     return next()
-  }
-  ,oauthServer.authenticate()
-  ,require('./routes/secure.js')
+  }, 
+  async (req, res, next) => {
+    const request = new OAuth2Server.Request(req)
+    const response = new OAuth2Server.Response(res)
+    const token = await oauth.authenticate(request, response, {})
+    res.locals.oauth = { token: token };
+    console.log(token)
+    next();
+  },
+  require('./routes/secure.js')
 ) // routes to access the protected stuff
+
 server.use('/', (req,res) => res.redirect('/client'))
 
 export default context;

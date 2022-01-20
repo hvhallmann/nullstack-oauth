@@ -30,9 +30,11 @@ export const authorizationCode = {
   type: 'object',
   properties: {
     authorizationCode: { type: 'string' },
-    expiresAt: { type: 'timestamp' },
-    ClientId: { type: 'string' },
-    UserId: { type: 'string' },
+    expiresAt: { type: 'string' },
+    redirectUri: { type: 'string' },
+    scope: { type: 'string' },
+    clientId: { type: 'string' },
+    userId: { type: 'string' },
   }
 }
 
@@ -40,10 +42,20 @@ export const tokens = {
   type: 'object',
   properties: {
     accessToken: { type: 'string' },
-    accessTokenExpiresOn: { type: 'timestamp' },
+    expiresAt: { type: 'string' },
     clientId: { type: 'string' },
+    scope: { type: 'string' },
+    userId: { type: 'string' },
+  }
+}
+
+export const refreshTokens = {
+  type: 'object',
+  properties: {
     refreshToken: { type: 'string' },
-    refreshTokenExpiresOn: { type: 'timestamp' },
+    expiresAt: { type: 'string' },
+    clientId: { type: 'string' },
+    scope: { type: 'string' },
     userId: { type: 'string' },
   }
 }
