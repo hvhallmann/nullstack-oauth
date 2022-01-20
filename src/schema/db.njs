@@ -30,7 +30,7 @@ export const authorizationCode = {
   type: 'object',
   properties: {
     authorizationCode: { type: 'string' },
-    expiresAt: { type: 'timestamp' },
+    expiresAt: { type: 'string' },
     redirectUri: { type: 'string' },
     scope: { type: 'string' },
     clientId: { type: 'string' },

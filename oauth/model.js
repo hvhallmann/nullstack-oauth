@@ -123,15 +123,15 @@ export function generateModel(database) {
         accessToken: token.accessToken,
         expiresAt: token.accessTokenExpiresAt,
         scope: token.scope,
-        clientId: client.id,
-        userId: user.id,
+        clientId: client._id,
+        userId: user._id,
       }
       const refreshToken = {
         refreshToken: token.refreshToken,
         expiresAt: token.refreshTokenExpiresAt,
         scope: token.scope,
-        clientId: client.id,
-        userId: user.id
+        clientId: client._id,
+        userId: user._id
       }
 
       const validToken = validateToken(dbtoken)
@@ -143,11 +143,21 @@ export function generateModel(database) {
       if (!validRefreshToken) console.log(validateRefreshToken.errors) 
 
       const fns = [
-        database.collection('tokens').insertOne({ dbtoken }),
-        database.collection('refreshTokens').insertOne({ refreshToken }),
+        database.collection('tokens').insertOne({ ...dbtoken }),
+        database.collection('refreshTokens').insertOne({ ...refreshToken }),
       ]
       const [accessResult, refreshResult] = await Promise.all(fns)
-      return { accessToken: dbtoken, refreshToken }
+      const response = { 
+        accessToken: dbtoken.accessToken, 
+        accessTokenExpiresAt: dbtoken.expiresAt,
+        refreshToken: refreshToken.refreshToken,
+        refreshTokenExpiresAt: refreshToken.expiresAt,
+        scope: dbtoken.scope,
+        client: {id: dbtoken.clientId.toString()},
+        user: {id: dbtoken.userId.toString()}
+      }
+      console.log(response)
+      return response
     },
 
     revokeToken: async (token) => {
