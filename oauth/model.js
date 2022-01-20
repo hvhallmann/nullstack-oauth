@@ -26,6 +26,11 @@ export function generateModel(database) {
       console.log('Getting Authorization Code ', authorizationCode)
       const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ authorizationCode })
 
+      if (!findAuthorizationCode) {
+        console.error('Authorization code not found')
+        return false
+      }
+
       const [code, findClient, findUser] = await Promise.all([
         findAuthorizationCode,
         await database.collection('clients').findOne({ _id: findAuthorizationCode.clientId }),
@@ -99,10 +104,34 @@ export function generateModel(database) {
 
       return Promise.all([
         dbToken,
-        database.collection('clients').findOne({clientId: ObjectId(dbToken.clientId)}),
+        database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
         database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
       ])
-      .spread(function(tok, client, user) {
+      .then(function([tok, client, user]) {
+        return {
+          accessToken: tok.access_token,
+          accessTokenExpiresAt: tok.expires_at,
+          scope: tok.scope,
+          client: client, // with 'id' property
+          user: user
+        };
+      });
+    },
+
+    getRefreshToken: async function(refreshToken) {
+      if (!refreshToken || refreshToken === 'undefined') return false
+      console.log('refreshToken', refreshToken)
+
+      const dbToken = await database.collection('refreshTokens').findOne({ 
+        refreshToken
+      });
+
+      return Promise.all([
+        dbToken,
+        database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
+        database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
+      ])
+      .then(function([tok, client, user]) {
         return {
           accessToken: tok.access_token,
           accessTokenExpiresAt: tok.expires_at,
@@ -141,6 +170,8 @@ export function generateModel(database) {
 
       if (!validToken) console.log(validateToken.errors) 
       if (!validRefreshToken) console.log(validateRefreshToken.errors) 
+
+      console.log('my7 refreshToken is', refreshToken)
 
       const fns = [
         database.collection('tokens').insertOne({ ...dbtoken }),
