@@ -141,6 +141,9 @@ export function generateModel(database) {
         database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
         database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
       ])
+
+      if (!findToken || !findClient) return false
+
       return {
         refreshToken: findToken.refreshToken,
         refreshTokenExpiresAt: findToken.expiresAt,
