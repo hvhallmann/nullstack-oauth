@@ -24,11 +24,12 @@ export function generateModel(database) {
 
     getAuthorizationCode: async function(authorizationCode) {
       console.log('Getting Authorization Code ', authorizationCode)
-      const code = await database.collection('authorizationTokens').findOne({ authorizationCode })
+      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ authorizationCode })
 
-      const [findClient, findUser] = await Promise.all([
-        await database.collection('clients').findOne({ _id: code.clientId }),
-        await database.collection('users').findOne({ _id: code.userId })
+      const [code, findClient, findUser] = await Promise.all([
+        findAuthorizationCode,
+        await database.collection('clients').findOne({ _id: findAuthorizationCode.clientId }),
+        await database.collection('users').findOne({ _id: findAuthorizationCode.userId })
       ])
       
       if(!code || !findClient || !findUser) return false
@@ -36,7 +37,7 @@ export function generateModel(database) {
       return {
         code: code.authorizationCode,
         expiresAt: code.expiresAt,
-        redirectUri: findClient.redirectUris[0],
+        redirectUri: code.redirectUri,
         scope: code.scope,
         client: {
           ...findClient,
@@ -55,6 +56,8 @@ export function generateModel(database) {
         const { authorizationCode, expiresAt, redirectUri, scope } = code
         const { _id: clientId } = client
         const { _id: userId } = user
+
+        await database.collection('authorizationTokens').deleteMany({ clientId, userId })
 
         const newAuthorizationCode = {
           authorizationCode,
