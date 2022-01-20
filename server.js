@@ -9,6 +9,7 @@ const DebugControl = require('./utilities/debug.js')
 import { generateModel } from './oauth/model'
 import OAuth2Server from 'oauth2-server'
 import { handleResponse } from './src/utils/handleResponse.njs'
+import { handleError } from './src/utils/handleError.njs'
 
 let oauth
 
@@ -84,14 +85,18 @@ server.post('/oauth/token', async (req, res, next) => {
 }, async (req, res, next) => {
   const request = new OAuth2Server.Request(req);
   const response = new OAuth2Server.Response(res);
-  const token = await oauth.token(request, response, {
-    requireClientAuthentication: { // whether client needs to provide client_secret
-      // 'authorization_code': false,
-    },
-  });
-  res.locals.oauth = { token: token };
-
-  return handleResponse(req, res, response)
+  try {
+    const token = await oauth.token(request, response, {
+      requireClientAuthentication: { // whether client needs to provide client_secret
+        // 'authorization_code': false,
+      },
+    });
+    res.locals.oauth = { token: token };
+    return handleResponse(req, res, response)
+  } catch (err) {
+    return handleError(err, req, res, response, next)
+  }
+  
 })
 
 // Note that the next router uses middleware. That protects all routes within this middleware
