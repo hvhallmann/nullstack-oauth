@@ -137,8 +137,8 @@ export function generateModel(database) {
       ])
       .then(function([tok, client, user]) {
         return {
-          accessToken: tok.access_token,
-          accessTokenExpiresAt: tok.expires_at,
+          refreshToken: tok.refreshToken,
+          refreshTokenExpiresAt: tok.expiresAt,
           scope: tok.scope,
           client: client, // with 'id' property
           user: user
