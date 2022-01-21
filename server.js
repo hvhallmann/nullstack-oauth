@@ -123,29 +123,6 @@ server.use('/secure', (req,res,next) => {
   require('./routes/secure.js')
 )
 
-// -- Google Auth
-
-server.use('/oauth2callback', async (req,res,next) => {
-  try {
-      // acquire the code from the querystring, and close the web server.
-    const qs = new url.URL(req.url, 'http://localhost:3000')
-      .searchParams;
-    const code = qs.get('code');
-    console.log(`Code is ${code}`);
-    res.end('Authentication successful! Please return to the console.');
-    server.destroy();
-
-    // Now that we have the code, use that to acquire tokens.
-    const r = await oAuth2Client.getToken(code);
-    // Make sure to set the credentials on the OAuth2 client.
-    oAuth2Client.setCredentials(r.tokens);
-    console.info('Tokens acquired.');
-    return oAuth2Client;
-  } catch (e) {
-    return new Error(e)
-  }
-})
-
 /**
 * Start by acquiring a pre-authenticated oAuth2 client.
 */
@@ -156,37 +133,26 @@ const oAuth2Client = new OAuth2Client(
 );
 
 server.use('/oauth2start', async (req,res) => {
-const authorizeUrl = oAuth2Client.generateAuthUrl({
-  access_type: 'offline',
-  scope: 'https://www.googleapis.com/auth/userinfo.profile',
-});
+  const authorizeUrl = oAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+  })
 
-return res.redirect(authorizeUrl)
+  return res.redirect(authorizeUrl)
 })
 
 server.use('/oauth2callback', async (req,res) => {
-  const qs = new url.URL(req.url, 'http://localhost:3000').searchParams;
-  const code = qs.get('code');
-  console.log(`Code is ${code}`);
-  res.end('Authentication successful! Please return to the console.');
+  const { code, scope } = req.query
+  
+  const r = await oAuth2Client.getToken(code)
+  oAuth2Client.setCredentials(r.tokens)
 
-  // Now that we have the code, use that to acquire tokens.
-  const r = await oAuth2Client.getToken(code);
-  // Make sure to set the credentials on the OAuth2 client.
-  oAuth2Client.setCredentials(r.tokens);
-  console.info('Tokens acquired.');
+  const url = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
+  const resp = await oAuth2Client.request({url})
+  console.log(resp.data)
 
+  return res.redirect('/success')
 
-  //another endopotin?
-  const resp = await oAuth2Client.request({url});
-  console.log(resp.data);
-
-  // After acquiring an access_token, you may want to check on the audience, expiration,
-  // or original scopes requested.  You can do that with the `getTokenInfo` method.
-  const tokenInfo = await oAuth2Client.getTokenInfo(
-    oAuth2Client.credentials.access_token
-  );
-  console.log(tokenInfo);
 })
 
 // server.use('/', (req,res) => res.redirect('/client'))
