@@ -55,8 +55,8 @@ class Login extends Nullstack {
     return (
       <div class="flex flex-col">
         <h1 class="text-center">Login</h1>
-        { this.error && <p>{ this.error }</p> }
         <form class="flex flex-col gap-2 p-2" onsubmit={this.handleLoginFormSubmit}>
+          { this.error && <p class="text-red-500">{ this.error }</p> }
           <div class="flex flex-col">
             <label for="username">Username</label>
             <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" id="username" bind={this.username} />
