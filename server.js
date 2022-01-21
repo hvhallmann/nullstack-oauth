@@ -133,26 +133,35 @@ const oAuth2Client = new OAuth2Client(
 );
 
 server.use('/oauth2start', async (req,res) => {
-  const authorizeUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
-  })
+const authorizeUrl = oAuth2Client.generateAuthUrl({
+  access_type: 'offline',
+  scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+});
 
   return res.redirect(authorizeUrl)
 })
 
 server.use('/oauth2callback', async (req,res) => {
   const { code, scope } = req.query
-  
-  const r = await oAuth2Client.getToken(code)
-  oAuth2Client.setCredentials(r.tokens)
 
-  const url = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
-  const resp = await oAuth2Client.request({url})
-  console.log(resp.data)
+  // Now that we have the code, use that to acquire tokens.
+  const r = await oAuth2Client.getToken(code);
+  // Make sure to set the credentials on the OAuth2 client.
+  oAuth2Client.setCredentials(r.tokens);
+  console.info('Tokens acquired.');
+  
+  const urlInfo = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
+  const respauth = await oAuth2Client.request({url: urlInfo}); //can be scope from query
+  console.log(respauth.data);
+
+  // After acquiring an access_token, you may want to check on the audience, expiration,
+  // or original scopes requested.  You can do that with the `getTokenInfo` method.
+  // const tokenInfo = await oAuth2Client.getTokenInfo(
+  //   oAuth2Client.credentials.access_token
+  // );
+  // console.log('tokenInfo', tokenInfo);
 
   return res.redirect('/success')
-
 })
 
 // server.use('/', (req,res) => res.redirect('/client'))
