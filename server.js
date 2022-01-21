@@ -1,6 +1,7 @@
 import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
+import { compare } from 'bcryptjs'
 import Application from './src/Application';
 
 import OAuth2Server from 'oauth2-server'
@@ -44,8 +45,8 @@ server.use('/oauth', require('./routes/auth.js')) // routes to access the auth s
 server.post('/oauth/authorize', async (req, res, next) => {
 
   const { username, password } = req.body
-  const user = await context.database.collection('users').findOne({ username, password })
-  if(user) {
+  const user = await context.database.collection('users').findOne({ username })
+  if(user && await compare(password, user.password)) {
     req.body.user = user
     return next()
   }
