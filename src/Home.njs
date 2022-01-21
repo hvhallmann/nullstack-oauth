@@ -40,6 +40,11 @@ class Home extends Nullstack {
           </span>
           <ul>
             <li>
+              <Link href="http://localhost:3000/client">
+                🎉 Use client app
+              </Link>
+            </li>
+            <li>
               <Link href="https://nullstack.app/renderable-components">
                 🎉 Create your first component 
               </Link>

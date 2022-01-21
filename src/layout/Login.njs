@@ -47,7 +47,7 @@ class Login extends Nullstack {
     if (error) {
       this.error = error;
     } else {
-      context.me = { ...me, ...user }
+      context.me = { ...me, ...user, authMethod: 'credentials' }
     }
   }  
   

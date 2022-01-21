@@ -4,6 +4,7 @@ import Register from "./Register";
 import ClientAuthentication from "./pages/oauth/ClientAuthentication";
 
 import HelloWorld from "./HelloWorld";
+import ErrorHandler from "./ErrorHandler"
 
 import './tailwind.css'
 
@@ -60,6 +61,8 @@ class Application extends Nullstack {
         <ClientAuthentication route="/oauth" />
         <HelloWorld route="/success" />
         <Register route="/register" />
+        <ErrorHandler route="/ops" />
+        <HelloWorld route="/secure/success" />
       </main>
     );
   }
