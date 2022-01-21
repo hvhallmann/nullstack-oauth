@@ -125,27 +125,6 @@ server.use('/secure', (req,res,next) => {
 
 // -- Google Auth
 
-server.use('/oauth2callback', async (req,res,next) => {
-  try {
-      // acquire the code from the querystring, and close the web server.
-    const qs = new url.URL(req.url, 'http://localhost:3000')
-      .searchParams;
-    const code = qs.get('code');
-    console.log(`Code is ${code}`);
-    res.end('Authentication successful! Please return to the console.');
-    server.destroy();
-
-    // Now that we have the code, use that to acquire tokens.
-    const r = await oAuth2Client.getToken(code);
-    // Make sure to set the credentials on the OAuth2 client.
-    oAuth2Client.setCredentials(r.tokens);
-    console.info('Tokens acquired.');
-    return oAuth2Client;
-  } catch (e) {
-    return new Error(e)
-  }
-})
-
 /**
 * Start by acquiring a pre-authenticated oAuth2 client.
 */
@@ -168,7 +147,7 @@ server.use('/oauth2callback', async (req,res) => {
   const qs = new url.URL(req.url, 'http://localhost:3000').searchParams;
   const code = qs.get('code');
   console.log(`Code is ${code}`);
-  res.end('Authentication successful! Please return to the console.');
+  // res.end('Authentication successful! Please return to the console.');
 
   // Now that we have the code, use that to acquire tokens.
   const r = await oAuth2Client.getToken(code);
@@ -176,9 +155,9 @@ server.use('/oauth2callback', async (req,res) => {
   oAuth2Client.setCredentials(r.tokens);
   console.info('Tokens acquired.');
 
-
+  const urlEndpoint = 'https://people.googleapis.com/v1/people/me?personFields=names';
   //another endopotin?
-  const resp = await oAuth2Client.request({url});
+  const resp = await oAuth2Client.request({url: urlEndpoint});
   console.log(resp.data);
 
   // After acquiring an access_token, you may want to check on the audience, expiration,
@@ -187,6 +166,8 @@ server.use('/oauth2callback', async (req,res) => {
     oAuth2Client.credentials.access_token
   );
   console.log(tokenInfo);
+
+  return res.redirect('/success')
 })
 
 // server.use('/', (req,res) => res.redirect('/client'))
