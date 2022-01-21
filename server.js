@@ -1,7 +1,6 @@
 import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
-import { compare } from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import Application from './src/Application';
 import { ObjectId } from 'mongodb'
@@ -13,7 +12,6 @@ import OAuthConfig from './src/config/oauth.njs'
 import cookieSession from 'cookie-session';
 import { generateModel } from './oauth/model'
 
-import OAuthConfig from './src/config/oauth.njs'
 import { handleError } from './src/utils/handleError.njs'
 import { handleResponse } from './src/utils/handleResponse.njs'
 
@@ -64,8 +62,6 @@ context.start = async function start() {
     ...OAuthConfig
   })
 }
-
-const { server, secrets } = context;
 
 
 /**
