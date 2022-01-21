@@ -1,8 +1,8 @@
 import Nullstack from "nullstack";
 import Home from "./Home";
 import Register from "./Register";
-
 import HelloWorld from "./HelloWorld";
+import ErrorHandler from "./ErrorHandler"
 
 class Application extends Nullstack {
   prepare({ page }) {
@@ -28,6 +28,7 @@ class Application extends Nullstack {
         <Home route="/" />
         <HelloWorld route="/success" />
         <Register route="/register" />
+        <ErrorHandler route="/ops" />
       </main>
     );
   }
