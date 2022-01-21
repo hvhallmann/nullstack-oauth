@@ -1,6 +1,7 @@
 import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
+import { compare } from 'bcryptjs'
 import Application from './src/Application';
 
 import OAuth2Server from 'oauth2-server'
@@ -8,6 +9,9 @@ import OAuthConfig from './src/config/oauth.njs'
 import { generateModel } from './oauth/model'
 import { handleResponse } from './src/utils/handleResponse.njs'
 import { handleError } from './src/utils/handleError.njs'
+
+import { OAuth2Client } from 'google-auth-library'
+const url = require('url');
 
 let oauth
 
@@ -30,7 +34,7 @@ context.start = async function start() {
   })
 }
 
-const { server } = context;
+const { server, secrets } = context;
 
 server.use(bodyParser.urlencoded({ extended: false }));
 server.use(bodyParser.json());
@@ -41,8 +45,8 @@ server.use('/oauth', require('./routes/auth.js')) // routes to access the auth s
 server.post('/oauth/authorize', async (req, res, next) => {
 
   const { username, password } = req.body
-  const user = await context.database.collection('users').findOne({ username, password })
-  if(user) {
+  const user = await context.database.collection('users').findOne({ username })
+  if(user && await compare(password, user.password)) {
     req.body.user = user
     return next()
   }
@@ -119,6 +123,47 @@ server.use('/secure', (req,res,next) => {
   require('./routes/secure.js')
 )
 
-server.use('/', (req,res) => res.redirect('/client'))
+/**
+* Start by acquiring a pre-authenticated oAuth2 client.
+*/
+const oAuth2Client = new OAuth2Client(
+  secrets.googleClientId,
+  secrets.googleClientSecret,
+  secrets.redirectUris
+);
+
+server.use('/oauth2start', async (req,res) => {
+const authorizeUrl = oAuth2Client.generateAuthUrl({
+  access_type: 'offline',
+  scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+});
+
+  return res.redirect(authorizeUrl)
+})
+
+server.use('/oauth2callback', async (req,res) => {
+  const { code, scope } = req.query
+
+  // Now that we have the code, use that to acquire tokens.
+  const r = await oAuth2Client.getToken(code);
+  // Make sure to set the credentials on the OAuth2 client.
+  oAuth2Client.setCredentials(r.tokens);
+  console.info('Tokens acquired.');
+  
+  const urlInfo = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
+  const respauth = await oAuth2Client.request({url: urlInfo}); //can be scope from query
+  console.log(respauth.data);
+
+  // After acquiring an access_token, you may want to check on the audience, expiration,
+  // or original scopes requested.  You can do that with the `getTokenInfo` method.
+  // const tokenInfo = await oAuth2Client.getTokenInfo(
+  //   oAuth2Client.credentials.access_token
+  // );
+  // console.log('tokenInfo', tokenInfo);
+
+  return res.redirect('/success')
+})
+
+// server.use('/', (req,res) => res.redirect('/client'))
 
 export default context;

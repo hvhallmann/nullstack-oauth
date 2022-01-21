@@ -1,6 +1,6 @@
 import Nullstack from "nullstack";
-import "./Application.scss";
 import Home from "./Home";
+import Register from "./Register";
 
 import HelloWorld from "./HelloWorld";
 
@@ -26,8 +26,8 @@ class Application extends Nullstack {
       <main>
         <Head />
         <Home route="/" />
-
-        <HelloWorld route="/hello" />
+        <HelloWorld route="/success" />
+        <Register route="/register" />
       </main>
     );
   }
