@@ -1,31 +1,20 @@
 import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
-import {
-  MongoClient
-} from 'mongodb';
+import { MongoClient } from 'mongodb';
 import jwt from 'jsonwebtoken'
 import Application from './src/Application';
-import {
-  ObjectId
-} from 'mongodb'
+import { ObjectId } from 'mongodb'
 
 import OAuth2Server from 'oauth2-server'
-import {
-  OAuth2Client
-} from 'google-auth-library'
+import { OAuth2Client } from 'google-auth-library'
 
 import OAuthConfig from './src/config/oauth.njs'
 import cookieSession from 'cookie-session';
-import {
-  generateModel
-} from './oauth/model'
+import { generateModel } from './oauth/model'
 
-import {
-  handleError
-} from './src/utils/handleError.njs'
-import {
-  handleResponse
-} from './src/utils/handleResponse.njs'
+import AuthorizeRoutes from './src/routes/oauth/authorize'
+import TokenRoutes from './src/routes/oauth/token'
+import SecureRoutes from './src/routes/oauth/secure'
 
 let oauth
 
@@ -82,6 +71,11 @@ context.start = async function start() {
   })
 }
 
+server.use((req, res, next) => {
+  req.oauth = oauth
+  return next()
+})
+
 
 /**
  * Start Google Auth by acquiring a pre-authenticated oAuth2 client.
@@ -101,97 +95,11 @@ server.use(bodyParser.urlencoded({
 server.use(bodyParser.json());
 
 server.use('/client', require('./routes/client.js')) // Client routes
-// server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
 
-server.post('/oauth/authorize', async (req, res, next) => {
-
-  if (req.me._id) {
-    req.body.user = req.me
-    return next()
-  }
-
-  const params = [ // Send params back down
-      'client_id',
-      'redirect_uri',
-      'response_type',
-      'grant_type',
-      'state',
-    ]
-    .map(a => `${a}=${req.body[a]}`)
-    .join('&')
-  return res.redirect(`/oauth?success=false&${params}`)
-
-}, async (req, res, next) => {
-
-  const request = new OAuth2Server.Request(req);
-  const response = new OAuth2Server.Response(res);
-
-  try {
-    const code = await oauth.authorize(request, response, {
-      authenticateHandler: {
-        handle: req => {
-          console.log('Authenticate Handler')
-          console.log(Object.keys(req.body).map(k => ({
-            name: k,
-            value: req.body[k]
-          })))
-          return req.body.user
-        }
-      }
-    })
-    res.locals.oauth = {
-      code: code
-    };
-
-    return handleResponse(req, res, response)
-  } catch (err) {
-    return handleError(err, req, res, response, next)
-  }
-
-})
-
-server.post('/oauth/token', async (req, res, next) => {
-  next()
-}, async (req, res, next) => {
-  const request = new OAuth2Server.Request(req);
-  const response = new OAuth2Server.Response(res);
-  try {
-    const token = await oauth.token(request, response, {
-      requireClientAuthentication: { // whether client needs to provide client_secret
-        // 'authorization_code': false,
-      },
-    });
-    res.locals.oauth = {
-      token: token
-    };
-    return handleResponse(req, res, response)
-  } catch (err) {
-    return handleError(err, req, res, response, next)
-  }
-
-})
+server.post('/oauth/authorize', AuthorizeRoutes)
+server.post('/oauth/token', TokenRoutes)
 // Note that the next router uses middleware. That protects all routes within this middleware
-server.use('/secure', (req, res, next) => {
-    console.log('Checking secured area')
-    return next()
-  },
-  async (req, res, next) => {
-      console.log('Checking secured area next middleware')
-      const request = new OAuth2Server.Request(req)
-      const response = new OAuth2Server.Response(res)
-
-      try {
-        const token = await oauth.authenticate(request, response, {})
-        res.locals.oauth = {
-          token: token
-        };
-        next();
-      } catch (err) {
-        return handleError(err, req, res, response, next)
-      }
-    },
-    require('./routes/secure.js')
-)
+server.use('/secure', SecureRoutes)
 
 server.use('/oauth2start', async (req, res) => {
   const authorizeUrl = oAuth2Client.generateAuthUrl({
@@ -267,7 +175,5 @@ server.use('/oauth2callback', async (req, res) => {
   }
 
 })
-
-// server.use('/', (req,res) => res.redirect('/client'))
 
 export default context;
