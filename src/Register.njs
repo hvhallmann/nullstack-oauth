@@ -84,36 +84,36 @@ class Register extends Nullstack {
   
   render() {
     return (
-      <section>
-        <div> Register </div>
-        { this.statusMessage && <p>{ this.statusMessage }</p>}
-        <form onsubmit={this.handleFormSubmit}>
-          <div>
+      <section class="flex m-4 max-w-screen-sm mx-auto flex-col items-center border rounded-md border-gray-200">
+        <h1 class="w-full text-lg text-center p-2">Login</h1>
+        <form class="flex w-full flex-col gap-2 p-2 px-6" onsubmit={this.handleFormSubmit}>
+          { this.statusMessage && <p class="text-red-500">{ this.statusMessage }</p>}
+          <div class="flex flex-col">
             <label>First name</label>
-            <input type="text" bind={this.firstName} />
+            <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" bind={this.firstName} />
           </div>
-          <div>
+          <div class="flex flex-col">
             <label>Last name</label>
-            <input type="text" bind={this.lastName}/>
+            <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" bind={this.lastName}/>
           </div>
-          <div>
+          <div class="flex flex-col">
             <label>Username</label>
-            <input type="text" bind={this.username}/>
+            <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" bind={this.username}/>
           </div>
-          <div>
+          <div class="flex flex-col">
             <label>Email</label>
-            <input type="email" bind={this.email}/>
+            <input class="py-2 px-3 border border-gray-300 rounded-md" type="email" bind={this.email}/>
           </div>
-          <div>
+          <div class="flex flex-col">
             <label>Password</label>
-            <input type="password" bind={this.password}/>
+            <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.password}/>
           </div>
-          <div>
+          <div class="flex flex-col">
             <label>Confirm Password</label>
-            <input type="password" bind={this.passwordConfirmation}/>
+            <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.passwordConfirmation}/>
           </div>
-          <div>
-            <button>Register</button>
+          <div class="flex">
+            <button class="py-2 px-3 self-center bg-sky-500 hover:bg-sky-400 text-white rounded-md">Register</button>
           </div>
         </form>
       </section>
