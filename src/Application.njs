@@ -51,11 +51,11 @@ class Application extends Nullstack {
     )
   }
 
-  render() {
+  render({ router }) {
     return (
       <main>
         <Head />
-        <Header />
+        { router.path !== '/oauth' && <Header /> }
         <Home route="/" />
         <ClientAuthentication route="/oauth" />
         <HelloWorld route="/success" />
