@@ -1,11 +1,6 @@
 import Nullstack from "nullstack";
 
 class HelloWorldSecure extends Nullstack {
-  count = 0;
-
-  increment() {
-    this.count++;
-  }
 
   render() {
     return (

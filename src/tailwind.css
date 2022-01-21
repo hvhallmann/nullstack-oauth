@@ -476,6 +476,11 @@ Ensure the default browser behavior of the `hidden` attribute.
   margin: 1rem;
 }
 
+.mx-24 {
+  margin-left: 6rem;
+  margin-right: 6rem;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -503,6 +508,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .max-w-screen-sm {
   max-width: 640px;
+}
+
+.flex-row {
+  flex-direction: row;
 }
 
 .flex-col {

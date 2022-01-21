@@ -6,6 +6,7 @@ import ClientAuthentication from "./pages/oauth/ClientAuthentication";
 import HelloWorld from "./HelloWorld";
 import HelloWorldSecure from "./HelloWorldSecure"
 import ErrorHandler from "./ErrorHandler"
+import ErrorHandlerPermission from "./ErrorHandlerPermission"
 
 import './tailwind.css'
 
@@ -43,6 +44,7 @@ class Application extends Nullstack {
   async logout(context) {
     this.clearSession();
     context.me = null;
+    location.reload();
   }
 
   renderHeader({me}) {
@@ -53,17 +55,19 @@ class Application extends Nullstack {
     )
   }
 
-  render({ router }) {
+  render({ router, me }) {
     return (
-      <main>
+      <main class="mx-24">
         <Head />
         { router.path !== '/oauth' && <Header /> }
         <Home route="/" />
         <ClientAuthentication route="/oauth" />
-        <HelloWorld route="/success" />
         <Register route="/register" />
         <ErrorHandler route="/ops" />
-        <HelloWorldSecure route="/secure/success" />
+        <>
+            { (me && me._id) ? <HelloWorldSecure route="/secured" /> : <ErrorHandlerPermission route="/secured" />}
+            {(me && me._id) ? <HelloWorld route="/success" /> : <ErrorHandlerPermission route="/success" />}
+        </>
       </main>
     );
   }

@@ -1,6 +1,8 @@
 import Nullstack from 'nullstack';
 import Logo from 'nullstack/logo';
 
+import './tailwind.css'
+
 class Home extends Nullstack {
 
   prepare({ project, page }) {
@@ -19,7 +21,7 @@ class Home extends Nullstack {
 
   render({ project }) {
     return (
-      <section>
+      <section class="mx-24 flex flex-row">
         <article>
           <Link href="https://nullstack.app/">
             <Logo height={60} light />
@@ -38,11 +40,21 @@ class Home extends Nullstack {
             </Link>
           </span>
           <ul>
+          <br/>
+            <br/>
+            <br/>
+            <br/>
             <li>
-              <Link href="http://localhost:3000/client">
-                🎉 Use client app
-              </Link>
+              <a href="http://localhost:3000/client">
+                💣︎ Use client app
+              </a>
             </li>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
             <li>
               <Link href="https://nullstack.app/renderable-components">
                 🎉 Create your first component 
@@ -80,7 +92,7 @@ class Home extends Nullstack {
         </article>
         <aside>
           <Link href="https://nullstack.app/waifu">
-            <img src="/nulla-chan.webp" alt="Nulla-Chan: Nullstack's official waifu" />
+            <img src="/nulla-chan.webp" alt="Nulla-Chan: Nullstack's official waifu" height="550px" width="400px"  />
           </Link>
         </aside>
       </section>

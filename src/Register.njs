@@ -79,7 +79,7 @@ class Register extends Nullstack {
     }
 
     this.statusMessage = 'New user created!'
-    router.path = '/client'
+    router.path = '/success'
   }
   
   render() {

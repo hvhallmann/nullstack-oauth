@@ -1,6 +1,6 @@
 import Nullstack from "nullstack";
 
-class ErrorHandler extends Nullstack {
+class ErrorHandlerPermission extends Nullstack {
 
   render() {
     return (
@@ -11,7 +11,7 @@ class ErrorHandler extends Nullstack {
         <article>
           <div>
             <h1>
-              Ops, something bad happened!
+              Ops, You do not have permission!
             </h1>
           </div>
           <a href="http://localhost:3000/client">
@@ -23,4 +23,4 @@ class ErrorHandler extends Nullstack {
   }
 }
 
-export default ErrorHandler;
+export default ErrorHandlerPermission;
