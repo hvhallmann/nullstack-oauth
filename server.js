@@ -187,17 +187,26 @@ server.use('/oauth2callback', async (req,res) => {
     if (!respauth.data.email) {
       console.error("user email not identified");
     }
+ 
+    let user;
+    
+    user = await context.database.collection('users').findOne({email: respauth.data.email})
   
-    const findUser = await context.database.collection('users').findOne({email: respauth.data.email})
-  
-    if (!findUser) {
-      context.database.collection('users').insertOne({
+    if (!user) {
+      user = {
         firstName: respauth.data.given_name,
         lastName: respauth.data.family_name,
         email: respauth.data.email,
         username: respauth.data.id,
-      })
+      }
+      const { insertedId } = context.database.collection('users').insertOne(user)
+      Object.assign(user, { _id: insertedId })
     }
+
+    req.session.token = jwt.sign(user._id.toString(), secrets.session);
+    
+    delete user.password;
+    req.me = {...user, authMethod: 'google'}
   
     // After acquiring an access_token, you may want to check on the audience, expiration,
     // or original scopes requested.  You can do that with the `getTokenInfo` method.
