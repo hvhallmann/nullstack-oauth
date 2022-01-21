@@ -1,24 +1,28 @@
 import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
-import { MongoClient } from 'mongodb';
 import jwt from 'jsonwebtoken'
-import Application from './src/Application';
-import { ObjectId } from 'mongodb'
-
+import cookieSession from 'cookie-session';
 import OAuth2Server from 'oauth2-server'
+
+import { MongoClient, ObjectId } from 'mongodb';
 import { OAuth2Client } from 'google-auth-library'
 
-import OAuthConfig from './src/config/oauth.njs'
-import cookieSession from 'cookie-session';
-import { generateModel } from './oauth/model'
 
-import { handleError } from './src/utils/handleError.njs'
-import { handleResponse } from './src/utils/handleResponse.njs'
+import { generateModel } from './oauth/model'
+import Application from './src/Application';
+import OAuthConfig from './src/config/oauth.njs'
+import AuthorizeRoutes from './src/routes/oauth/authorize'
+import TokenRoutes from './src/routes/oauth/token'
+import SecureRoutes from './src/routes/oauth/secure'
+import oauth2callback from './src/routes/oauth/google'
 
 let oauth
 
 const context = Nullstack.start(Application);
-const { server, secrets } = context;
+const {
+  server,
+  secrets
+} = context;
 
 server.use(cookieSession({
   name: 'session',
@@ -26,7 +30,6 @@ server.use(cookieSession({
 }))
 
 server.use(async (request, response, next) => {
-  const { organization } = request;
   if (!request.session.token) {
     request.me = null;
   } else {
@@ -36,7 +39,9 @@ server.use(async (request, response, next) => {
         _id: ObjectId(id)
       });
       delete user.password;
-      request.me = {...user};
+      request.me = {
+        ...user
+      };
     } catch (error) {
       console.log(error)
       request.me = null;
@@ -63,10 +68,14 @@ context.start = async function start() {
   })
 }
 
+server.use((req, res, next) => {
+  req.oauth = oauth
+  return next()
+})
 
 /**
-* Start Google Auth by acquiring a pre-authenticated oAuth2 client.
-*/
+ * Start Google Auth by acquiring a pre-authenticated oAuth2 client.
+ */
 if (!secrets.googleClientId) {
   console.error('Failed to identify google auth secrets')
 }
@@ -76,92 +85,19 @@ const oAuth2Client = new OAuth2Client(
   secrets.redirectUris
 );
 
-server.use(bodyParser.urlencoded({ extended: false }));
+server.use(bodyParser.urlencoded({
+  extended: false
+}));
 server.use(bodyParser.json());
 
 server.use('/client', require('./routes/client.js')) // Client routes
-// server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
 
-server.post('/oauth/authorize', async (req, res, next) => {
-
-  if(req.me._id) {    
-    req.body.user = req.me
-    return next()
-  }
-
-  const params = [ // Send params back down
-    'client_id',
-    'redirect_uri',
-    'response_type',
-    'grant_type',
-    'state',
-  ]
-    .map(a => `${a}=${req.body[a]}`)
-    .join('&')
-  return res.redirect(`/oauth?success=false&${params}`)
-
-}, async (req, res, next) => {
-
-  const request = new OAuth2Server.Request(req);
-  const response = new OAuth2Server.Response(res);
-  
-  try {
-    const code = await oauth.authorize(request, response, {
-      authenticateHandler: {
-        handle: req => {
-          console.log('Authenticate Handler')
-          console.log(Object.keys(req.body).map(k => ({name: k, value: req.body[k]})))
-          return req.body.user
-        }
-      }
-    })
-    res.locals.oauth = {code: code};
-
-    return handleResponse(req, res, response)
-  } catch (err) {
-    return handleError(err, req, res, response, next)
-  }
-  
-})
-
-server.post('/oauth/token', async (req, res, next) => {
-  next()
-}, async (req, res, next) => {
-  const request = new OAuth2Server.Request(req);
-  const response = new OAuth2Server.Response(res);
-  try {
-    const token = await oauth.token(request, response, {
-      requireClientAuthentication: { // whether client needs to provide client_secret
-        // 'authorization_code': false,
-      },
-    });
-    res.locals.oauth = { token: token };
-    return handleResponse(req, res, response)
-  } catch (err) {
-    return handleError(err, req, res, response, next)
-  }
-  
-})
+server.post('/oauth/authorize', AuthorizeRoutes)
+server.post('/oauth/token', TokenRoutes)
 // Note that the next router uses middleware. That protects all routes within this middleware
-server.use('/secure', (req,res,next) => {
-    return next()
-  }, 
-  async (req, res, next) => {
-    const request = new OAuth2Server.Request(req)
-    const response = new OAuth2Server.Response(res)
+server.use('/secure', SecureRoutes)
 
-    try {
-      const token = await oauth.authenticate(request, response, {})
-      res.locals.oauth = { token: token };
-      next();
-    } catch (err) {
-      return handleError(err, req, res, response, next)
-    }
-  },
-  require('./routes/secure.js')
-)
-
-server.use('/oauth2start', async (req,res) => {
+server.use('/oauth2start', async (req, res) => {
   const authorizeUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
@@ -170,59 +106,6 @@ server.use('/oauth2start', async (req,res) => {
   return res.redirect(authorizeUrl)
 })
 
-server.use('/oauth2callback', async (req,res) => {
-  try {
-    const { code, scope } = req.query
-  
-    // Now that we have the code, use that to acquire tokens.
-    const r = await oAuth2Client.getToken(code);
-    // Make sure to set the credentials on the OAuth2 client.
-    oAuth2Client.setCredentials(r.tokens);
-    console.info('Tokens acquired.');
-    
-    const urlInfo = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json'
-    const respauth = await oAuth2Client.request({url: urlInfo}); //can be scope from query
-    console.log(respauth.data);
-  
-    if (!respauth.data.email) {
-      console.error("user email not identified");
-    }
- 
-    let user;
-    
-    user = await context.database.collection('users').findOne({email: respauth.data.email})
-  
-    if (!user) {
-      user = {
-        firstName: respauth.data.given_name,
-        lastName: respauth.data.family_name,
-        email: respauth.data.email,
-        username: respauth.data.id,
-      }
-      const { insertedId } = context.database.collection('users').insertOne(user)
-      Object.assign(user, { _id: insertedId })
-    }
-
-    req.session.token = jwt.sign(user._id.toString(), secrets.session);
-    
-    delete user.password;
-    req.me = {...user, authMethod: 'google'}
-  
-    // After acquiring an access_token, you may want to check on the audience, expiration,
-    // or original scopes requested.  You can do that with the `getTokenInfo` method.
-    // const tokenInfo = await oAuth2Client.getTokenInfo(
-    //   oAuth2Client.credentials.access_token
-    // );
-    // console.log('tokenInfo', tokenInfo);
-  
-    return res.redirect('/success')
-  } catch (error) {
-    console.error("Unexpected error", error);
-    return res.redirect('/ops')
-  }
-  
-})
-
-// server.use('/', (req,res) => res.redirect('/client'))
+server.use('/oauth2callback', async (req, res) => oauth2callback(req, res, context.database, oAuth2Client, secrets))
 
 export default context;

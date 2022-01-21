@@ -1,7 +1,13 @@
 import Ajv from 'ajv';
 import addFormats from "ajv-formats";
-import { tokens, refreshTokens, authorizationTokens } from '../src/schema/db.njs';
-import { ObjectId } from 'mongodb'
+import {
+  tokens,
+  refreshTokens,
+  authorizationTokens
+} from '../src/schema/db.njs';
+import {
+  ObjectId
+} from 'mongodb'
 
 const ajv = new Ajv()
 addFormats(ajv)
@@ -11,13 +17,15 @@ const validateRefreshToken = ajv.compile(refreshTokens)
 const validateAuthTokens = ajv.compile(authorizationTokens)
 
 
-export function generateModel(database) {  
+export function generateModel(database) {
   return {
-    getClient: async function(clientId, clientSecret) {
-      console.log('Getting Client... ', { clientId, clientSecret })
-      const client = await database.collection('clients').findOne({ 
+    getClient: async function (clientId, clientSecret) {
+      console.log('Getting Client... ')
+      const client = await database.collection('clients').findOne({
         clientId,
-        ...(clientSecret ? {clientSecret} : null)
+        ...(clientSecret ? {
+          clientSecret
+        } : null)
       });
       return {
         ...client,
@@ -25,9 +33,11 @@ export function generateModel(database) {
       }
     },
 
-    getAuthorizationCode: async function(authorizationCode) {
-      console.log('Getting Authorization Code ', authorizationCode)
-      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({ authorizationCode })
+    getAuthorizationCode: async function (authorizationCode) {
+      console.log('Getting Authorization Code ')
+      const findAuthorizationCode = await database.collection('authorizationTokens').findOne({
+        authorizationCode
+      })
 
       if (!findAuthorizationCode) {
         console.error('Authorization code not found')
@@ -36,11 +46,15 @@ export function generateModel(database) {
 
       const [code, findClient, findUser] = await Promise.all([
         findAuthorizationCode,
-        await database.collection('clients').findOne({ _id: findAuthorizationCode.clientId }),
-        await database.collection('users').findOne({ _id: findAuthorizationCode.userId })
+        await database.collection('clients').findOne({
+          _id: findAuthorizationCode.clientId
+        }),
+        await database.collection('users').findOne({
+          _id: findAuthorizationCode.userId
+        })
       ])
-      
-      if(!code || !findClient || !findUser) return false
+
+      if (!code || !findClient || !findUser) return false
 
       return {
         code: code.authorizationCode,
@@ -61,11 +75,23 @@ export function generateModel(database) {
     saveAuthorizationCode: async (code, client, user) => {
       try {
 
-        const { authorizationCode, expiresAt, redirectUri, scope } = code
-        const { _id: clientId } = client
-        const { _id: userId } = user
+        const {
+          authorizationCode,
+          expiresAt,
+          redirectUri,
+          scope
+        } = code
+        const {
+          _id: clientId
+        } = client
+        const {
+          _id: userId
+        } = user
 
-        await database.collection('authorizationTokens').deleteMany({ clientId, userId })
+        await database.collection('authorizationTokens').deleteMany({
+          clientId,
+          userId
+        })
 
         const newAuthorizationCode = {
           authorizationCode,
@@ -95,23 +121,31 @@ export function generateModel(database) {
       }
     },
 
-    revokeAuthorizationCode: async function(authorizationCode) {
-      console.log('Revoking Authorization Code ', authorizationCode)
-      const { deletedCount  } = await database.collection('authorizationTokens').deleteOne({ authorizationCode: authorizationCode.code })
-      return deletedCount === 1 
+    revokeAuthorizationCode: async function (authorizationCode) {
+      console.log('Revoking Authorization Code ')
+      const {
+        deletedCount
+      } = await database.collection('authorizationTokens').deleteOne({
+        authorizationCode: authorizationCode.code
+      })
+      return deletedCount === 1
     },
-    
-    getAccessToken: async function(token) {
+
+    getAccessToken: async function (token) {
       if (!token || token === 'undefined') return false
 
-      const dbToken = await database.collection('tokens').findOne({ 
+      const dbToken = await database.collection('tokens').findOne({
         accessToken: token
       });
 
       const [findToken, findClient, findUser] = await Promise.all([
         dbToken,
-        database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
-        database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
+        database.collection('clients').findOne({
+          _id: ObjectId(dbToken.clientId)
+        }),
+        database.collection('users').findOne({
+          _id: ObjectId(dbToken.userId)
+        })
       ])
 
       return {
@@ -129,17 +163,21 @@ export function generateModel(database) {
       }
     },
 
-    getRefreshToken: async function(refreshToken) {
+    getRefreshToken: async function (refreshToken) {
       if (!refreshToken || refreshToken === 'undefined') return false
 
-      const dbToken = await database.collection('refreshTokens').findOne({ 
+      const dbToken = await database.collection('refreshTokens').findOne({
         refreshToken
       });
 
       const [findToken, findClient, findUser] = await Promise.all([
         dbToken,
-        database.collection('clients').findOne({_id: ObjectId(dbToken.clientId)}),
-        database.collection('users').findOne({_id: ObjectId(dbToken.userId)})
+        database.collection('clients').findOne({
+          _id: ObjectId(dbToken.clientId)
+        }),
+        database.collection('users').findOne({
+          _id: ObjectId(dbToken.userId)
+        })
       ])
 
       if (!findToken || !findClient) return false
@@ -159,7 +197,7 @@ export function generateModel(database) {
       };
     },
 
-    saveToken: async function(token, client, user) {
+    saveToken: async function (token, client, user) {
       /* This is where you insert the token into the database */
       const dbtoken = {
         accessToken: token.accessToken,
@@ -182,29 +220,35 @@ export function generateModel(database) {
       if (!validRefreshToken) console.error('refresh not valid', validateRefreshToken.errors)
 
       const fns = [
-        database.collection('tokens').insertOne({ ...dbtoken }),
-        database.collection('refreshTokens').insertOne({ ...refreshToken }),
+        database.collection('tokens').insertOne({
+          ...dbtoken
+        }),
+        database.collection('refreshTokens').insertOne({
+          ...refreshToken
+        }),
       ]
       const [accessResult, refreshResult] = await Promise.all(fns)
-      const response = { 
-        accessToken: dbtoken.accessToken, 
+      const response = {
+        accessToken: dbtoken.accessToken,
         accessTokenExpiresAt: dbtoken.expiresAt,
         refreshToken: refreshToken.refreshToken,
         refreshTokenExpiresAt: refreshToken.expiresAt,
         scope: dbtoken.scope,
-        client: {id: dbtoken.clientId.toString()},
-        user: {id: dbtoken.userId.toString()}
+        client: {
+          id: dbtoken.clientId.toString()
+        },
+        user: {
+          id: dbtoken.userId.toString()
+        }
       }
-      console.log(response)
       return response
     },
 
     revokeToken: async (token) => {
       /* Delete the token from the database */
-      console.log('revoke token', token)
       if (!token || token === 'undefined') return false
 
-      const response = await database.collection('refreshTokens').deleteOne({ 
+      const response = await database.collection('refreshTokens').deleteOne({
         refreshToken: token.refreshToken
       });
 
@@ -213,7 +257,6 @@ export function generateModel(database) {
 
     verifyScope: async (token, scope) => {
       /* This is where we check to make sure the client has access to this scope */
-      console.log('scope', scope)
       if (!token || token === 'undefined') return false
 
       if (!token.scope) {
@@ -226,13 +269,18 @@ export function generateModel(database) {
 
     // -- NOT MAIN FUNCTIONS ---
 
-    getUser: async function(username, password) {
-      const user = await database.collection('users').findOne({username, password})
+    getUser: async function (username, password) {
+      const user = await database.collection('users').findOne({
+        username,
+        password
+      })
       return (user) ? user : false
     },
 
-    getUserFromClient: async function(client) {
-      const user = await database.collection('users').findOne({_id: client.user_id})
+    getUserFromClient: async function (client) {
+      const user = await database.collection('users').findOne({
+        _id: client.user_id
+      })
       return (user) ? user : false
     },
 

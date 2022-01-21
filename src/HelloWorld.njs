@@ -18,6 +18,9 @@ class HelloWorld extends Nullstack {
         <div>
           <span>{this.count} ows</span>  
         </div>
+        <a href="http://localhost:3000/client">
+         ✨ Back to client app
+        </a>
       </div>
     );
   }
