@@ -2,11 +2,15 @@ import Nullstack from 'nullstack';
 import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
 import { compare } from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 import Application from './src/Application';
+import { ObjectId } from 'mongodb'
 
 import OAuth2Server from 'oauth2-server'
 import { OAuth2Client } from 'google-auth-library'
 
+import OAuthConfig from './src/config/oauth.njs'
+import cookieSession from 'cookie-session';
 import { generateModel } from './oauth/model'
 
 import OAuthConfig from './src/config/oauth.njs'
@@ -16,6 +20,33 @@ import { handleResponse } from './src/utils/handleResponse.njs'
 let oauth
 
 const context = Nullstack.start(Application);
+const { server, secrets } = context;
+
+server.use(cookieSession({
+  name: 'session',
+  keys: ['token'],
+}))
+
+server.use(async (request, response, next) => {
+  const { organization } = request;
+  if (!request.session.token) {
+    request.me = null;
+  } else {
+    try {
+      const id = jwt.verify(request.session.token, secrets.session)
+      const user = await context.database.collection('users').findOne({
+        _id: ObjectId(id)
+      });
+      delete user.password;
+      request.me = {...user};
+    } catch (error) {
+      console.log(error)
+      request.me = null;
+      request.session.token = null;
+    }
+  }
+  next();
+})
 
 context.start = async function start() {
   // https://nullstack.app/application-startup
@@ -53,14 +84,12 @@ server.use(bodyParser.urlencoded({ extended: false }));
 server.use(bodyParser.json());
 
 server.use('/client', require('./routes/client.js')) // Client routes
-server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
+// server.use('/oauth', require('./routes/auth.js')) // routes to access the auth stuff
 
 server.post('/oauth/authorize', async (req, res, next) => {
 
-  const { username, password } = req.body
-  const user = await context.database.collection('users').findOne({ username })
-  if(user && await compare(password, user.password)) {
-    req.body.user = user
+  if(req.me._id) {    
+    req.body.user = req.me
     return next()
   }
 
