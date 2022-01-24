@@ -173,7 +173,7 @@ class Register extends Nullstack {
   renderSteps({ me }) {
     return (
       <div class="w-full text-center">
-        <ul class="inline-grid grid-flow-col gap-4 bold">
+        <ul class="inline-grid grid-flow-col gap-8 bold relative">
           <li class="grid">
             <span onclick={() => {
               if(!me?._id) {
@@ -181,13 +181,35 @@ class Register extends Nullstack {
               }
             }} class="cursor-pointer flex mx-auto justify-center items-center bg-sky-600 text-white h-10 w-10 rounded-full">1</span>
           </li>
-          <li class="grid">
+          <li class={
+            `${this.step >= 2 ? 'before:border-sky-600' : ''}
+              grid
+              relative
+              before:absolute
+              before:border-b-2
+              before:w-full
+              before:border-dashed
+              before:-left-10
+              before:top-5
+              before:-z-10`
+          }>
             { this.step >= 2 
               ? <span onclick={{ step: 2}} class="cursor-pointer flex mx-auto justify-center items-center bg-sky-600 text-white h-10 w-10 rounded-full">2</span>
               : <span class="flex mx-auto justify-center items-center bg-gray-300 text-gray-500 h-10 w-10 rounded-full">2</span>
             }
           </li>
-          <li class="grid">
+          <li class={
+            `${this.step >= 2 ? 'before:border-sky-600' : ''}
+              grid
+              relative
+              before:absolute
+              before:border-b-2
+              before:w-full
+              before:border-dashed
+              before:-left-10
+              before:top-5
+              before:-z-10`
+          }>
             { this.step >= 3 
               ? <span onclick={{ step: 3}} class="cursor-pointer flex mx-auto justify-center items-center bg-sky-600 text-white h-10 w-10 rounded-full">3</span>
               : <span class="flex mx-auto justify-center items-center bg-gray-300 text-gray-500 h-10 w-10 rounded-full">3</span>
