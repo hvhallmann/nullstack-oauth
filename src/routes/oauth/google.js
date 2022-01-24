@@ -42,7 +42,7 @@ const oauth2callback = async (req, res, database, oAuth2Client, secrets) => {
         email: respauth.data.email,
         username: respauth.data.id,
       }
-      const { insertedId } = context.database.collection('users').insertOne(user)
+      const { insertedId } = await database.collection('users').insertOne(user)
       Object.assign(user, { _id: insertedId })
     }
 
