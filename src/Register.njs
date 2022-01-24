@@ -85,6 +85,8 @@ class Register extends Nullstack {
     }
     if(!password || password === '') {
       errors = { ...errors, password: "Invalid Format" }
+    } else if (password.length < 8) {
+      errors = { ...errors, password: "At least 8 characters required" }
     }
     if(password !== passwordConfirmation) {
       errors = { ...errors, passwordConfirmation: "Password doesn't match" }
@@ -125,7 +127,7 @@ class Register extends Nullstack {
     return !!insertedId
   }
 
-  async handleStepOneSignUp({ router }) {
+  async handleStepOneSignUp() {
 
     this.errors = {}
 
@@ -141,8 +143,6 @@ class Register extends Nullstack {
     }
 
     this.step = 2
-    // this.statusMessage = 'New user created!'
-    // router.path = '/success'
   }
 
   async handleStepTwoNext() {
@@ -159,7 +159,7 @@ class Register extends Nullstack {
     this.step = 3
   }
 
-  async handleCreateAccount() {
+  async handleCreateAccount({ router }) {
     const response = await this.createAccount({
       email: this.email,
       password: this.password,
@@ -167,7 +167,12 @@ class Register extends Nullstack {
       // wallet: '???'
     })
 
-    console.log(response)
+    if(response) {
+      //TODO: some created message
+      router.path = '/signin'
+    }
+    
+    this.statusMessage = 'Failed to create account, please try again later.'
   }
 
   renderSteps({ me }) {
@@ -225,13 +230,14 @@ class Register extends Nullstack {
       <div class="w-full flex flex-col gap-4">
         <div class="flex flex-col">
           <div class="flex justify-between items-end">
-            <label class="bold mb-1">Email*</label>
+            <label class="bold mb-1">E-mail*</label>
             { this.errors.email 
               ? <small class="mb-1 text-red-500">{ this.errors.email }</small>
               : <small class="mb-1 text-gray-400 bold">{ this.email.length }/50</small>
             }
           </div>
           <input class="py-2 px-3 border border-gray-300 rounded-md" type="email" oninput={() => { 
+            delete this.errors.email
             if(this.email.length > 50) {
               this.email = this.email.slice(0, 50)
             }
@@ -242,17 +248,17 @@ class Register extends Nullstack {
             <label class="bold mb-1">Password</label>
             { this.errors.password && <small class="mb-1 text-red-500">{ this.errors.password }</small> }
           </div>
-          <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.password}/>
+          <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" oninput={() => delete this.errors.password} bind={this.password}/>
         </div>
         <div class="flex flex-col">
           <div class="flex justify-between items-end">
             <label class="bold mb-1">Confirm Password</label>
             { this.errors.passwordConfirmation && <small class="mb-1 text-red-500">{ this.errors.passwordConfirmation }</small> }
           </div>
-          <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.passwordConfirmation}/>
+          <input class="py-2 px-3 border border-gray-300 rounded-md" type="password"  oninput={() => delete this.errors.passwordConfirmation} bind={this.passwordConfirmation}/>
         </div>
         <div>
-          <p>You already have an account? <a class="text-sky-600" href="/login">Sign In</a></p>
+          <p>You already have an account? <a class="text-sky-600" href="/signin">Sign In</a></p>
         </div>
         <div class="flex justify-between">
           <button onclick={ this.handleStepOneSignUp } class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Sign Up</button>
@@ -341,35 +347,6 @@ class Register extends Nullstack {
           { this.step === 2 && <StepTwo /> }
           { this.step === 3 && <StepThree /> }
         </div>
-        {/* <form class="flex w-full flex-col gap-2 p-2 px-6" onsubmit={this.handleCreateAccount}>
-          <div class="flex flex-col">
-            <label>First name</label>
-            <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" bind={this.firstName} />
-          </div>
-          <div class="flex flex-col">
-            <label>Last name</label>
-            <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" bind={this.lastName}/>
-          </div>
-          <div class="flex flex-col">
-            <label>Username</label>
-            <input class="py-2 px-3 border border-gray-300 rounded-md" type="text" bind={this.username}/>
-          </div>
-          <div class="flex flex-col">
-            <label>Email</label>
-            <input class="py-2 px-3 border border-gray-300 rounded-md" type="email" bind={this.email}/>
-          </div>
-          <div class="flex flex-col">
-            <label>Password</label>
-            <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.password}/>
-          </div>
-          <div class="flex flex-col">
-            <label>Confirm Password</label>
-            <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.passwordConfirmation}/>
-          </div>
-          <div class="flex">
-            <button class="py-2 px-3 self-center bg-sky-500 hover:bg-sky-400 text-white rounded-md">Register</button>
-          </div>
-        </form> */}
       </section>
     )
   }
