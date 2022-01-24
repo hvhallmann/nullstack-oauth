@@ -9,7 +9,7 @@ import ErrorHandler from "./ErrorHandler"
 import ErrorHandlerPermission from "./ErrorHandlerPermission"
 
 import './tailwind.css'
-import SingIn from "./SingIn.njs";
+import SignIn from "./SignIn.njs";
 
 class Application extends Nullstack {
   
@@ -70,7 +70,7 @@ class Application extends Nullstack {
         <Home route="/" />
         <ClientAuthentication route="/oauth" />
         <Register route="/register" />
-        <SingIn route="/signin" />
+        <SignIn route="/signin" />
         <ErrorHandler route="/ops" />
         <>
             { (me && me._id) ? <HelloWorldSecure route="/secured" /> : <ErrorHandlerPermission route="/secured" />}

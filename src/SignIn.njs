@@ -4,7 +4,7 @@ import { compare } from 'bcryptjs'
 import { OAuth2Client } from 'google-auth-library'
 
 
-class SingIn extends Nullstack {
+class SignIn extends Nullstack {
 
   errors = {}
   email = ''
@@ -142,4 +142,4 @@ class SingIn extends Nullstack {
 
 }
 
-export default SingIn;
+export default SignIn;
