@@ -19,6 +19,7 @@ class Register extends Nullstack {
   wallet_type = 'flow'
   wallet = ''
 
+  countryList = ''
   statusMessage = ''
 
   googleAuthorizeUrl = ''
@@ -37,6 +38,11 @@ class Register extends Nullstack {
     });
     return authorizeUrl
   }
+
+  static async getCountryList() {
+    const response = await fetch('http://country.io/names.json')
+    return await response.json()
+  }
   
   async initiate({ me }) {
     if(me?._id) {
@@ -49,13 +55,17 @@ class Register extends Nullstack {
       this.step = 1
     }
     this.googleAuthorizeUrl = await this.getGoogleAuthorizationUrl()
+
+    try {
+      this.countryList = await this.getCountryList()
+    } catch (err) {}
   }
   
   async hydrate() {
     // your code goes here
   }
 
-  static async createUser(data) {
+  static async validateFirstStep(data) {
     const {
       database,
       email,
@@ -82,20 +92,44 @@ class Register extends Nullstack {
 
     if(!!Object.keys(errors).length) return { errors }
 
-    // return await database.collection('users').insertOne({
-    //   // firstName,
-    //   // lastName,
-    //   email,
-    //   username,
-    //   password: await hash(password, 10),
-    // })
+    return { errors }
+  }
+  
+  static async validateFirstTwo(data) {
+    const {
+      country,
+    } = data
+
+    let errors = {}
+
+    if(!country || country === '') {
+      errors = { ...errors, country: 'Country is required' }
+    }
+
+    if(!!Object.keys(errors).length) return { errors }
+
+    return { errors }
   }
 
-  async handleCreateAccount({ router }) {
+  static async createAccount(data) {
+    const { database, email, password, country } = data
 
-    this.statusMessage = ''
+    //TODO: Validation before create in db
+    
+    const { insertedId } = await database.collection('users').insertOne({
+      email,
+      country,
+      password: await hash(password, 10),
+    })
 
-    const response = await this.createUser({
+    return !!insertedId
+  }
+
+  async handleStepOneSignUp({ router }) {
+
+    this.errors = {}
+
+    const response = await this.validateFirstStep({
       email: this.email,
       password: this.password,
       passwordConfirmation: this.passwordConfirmation
@@ -106,19 +140,46 @@ class Register extends Nullstack {
       return
     }
 
-    console.log(response)
-
-
+    this.step = 2
     // this.statusMessage = 'New user created!'
     // router.path = '/success'
   }
 
-  renderSteps() {
+  async handleStepTwoNext() {
+
+    const response = await this.validateFirstTwo({
+      country: this.country
+    })
+
+    if(!!Object.keys(response.errors).length) {
+      this.errors = response.errors
+      return
+    }
+    
+    this.step = 3
+  }
+
+  async handleCreateAccount() {
+    const response = await this.createAccount({
+      email: this.email,
+      password: this.password,
+      country: this.country,
+      // wallet: '???'
+    })
+
+    console.log(response)
+  }
+
+  renderSteps({ me }) {
     return (
       <div class="w-full text-center">
         <ul class="inline-grid grid-flow-col gap-4 bold">
           <li class="grid">
-            <span onclick={{ step: 1}} class="cursor-pointer flex mx-auto justify-center items-center bg-sky-600 text-white h-10 w-10 rounded-full">1</span>
+            <span onclick={() => {
+              if(!me?._id) {
+                this.step = 1
+              }
+            }} class="cursor-pointer flex mx-auto justify-center items-center bg-sky-600 text-white h-10 w-10 rounded-full">1</span>
           </li>
           <li class="grid">
             { this.step >= 2 
@@ -172,7 +233,7 @@ class Register extends Nullstack {
           <p>You already have an account? <a class="text-sky-600" href="/login">Sign In</a></p>
         </div>
         <div class="flex justify-between">
-          <button onclick={ this.handleCreateAccount } class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Sign Up</button>
+          <button onclick={ this.handleStepOneSignUp } class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Sign Up</button>
           <a href={this.googleAuthorizeUrl} class="flex flex-row items-center py-2 px-3 self-center border border-gray-300 rounded-md">
             <svg class="mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
               <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
@@ -193,9 +254,15 @@ class Register extends Nullstack {
     return (
       <div class="w-full flex flex-col gap-4">
         <div class="flex flex-col">
-          <label class="bold mb-1">Country</label>
-          <select bing={this.country} class="py-2 px-3 border border-gray-300 rounded-md">
+          <div class="flex justify-between items-end">
+            <label class="bold mb-1">Country</label>
+            { this.errors.country && <small class="mb-1 text-red-500">{ this.errors.country }</small> }
+          </div>
+          <select bind={this.country} class="py-2 px-3 border border-gray-300 rounded-md">
             <option value="">Select a Country</option>
+            { Object.keys(this.countryList).map(country => (
+              <option value={this.countryList[country]}>{ this.countryList[country] }</option>
+            )) }
           </select>
         </div>
         <div class="flex flex-col">
@@ -207,7 +274,7 @@ class Register extends Nullstack {
           <input class="py-2 px-3 border border-gray-300 rounded-md" type="text"/>
         </div>
         <div class="flex justify-between">
-          <button onclick={{ step: 3}} class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Next</button>
+          <button onclick={this.handleStepTwoNext} class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Next</button>
         </div>
       </div>
     )
@@ -233,7 +300,7 @@ class Register extends Nullstack {
           <p>You will be able to connect more wallets in your account settings later</p>
         </div>
         <div class="flex justify-center">
-          <button onclick={{ step: 3}} class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Create Account</button>
+          <button onclick={this.handleCreateAccount} class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Create Account</button>
         </div>
       </div>
     )
