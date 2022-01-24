@@ -9,6 +9,7 @@ import ErrorHandler from "./ErrorHandler"
 import ErrorHandlerPermission from "./ErrorHandlerPermission"
 
 import './tailwind.css'
+import SignIn from "./SignIn.njs";
 
 class Application extends Nullstack {
   
@@ -23,6 +24,12 @@ class Application extends Nullstack {
 
   async initiate(context) {
     context.me = await this.getAuthenticatedUser();
+    if(context.me?._id) {
+      //Check if need credentials completion
+      if(context.router.path !== '/register' && !context.me.country) {
+        context.router.path = '/register'
+      }
+    }
   }
 
   renderHead() {
@@ -63,6 +70,7 @@ class Application extends Nullstack {
         <Home route="/" />
         <ClientAuthentication route="/oauth" />
         <Register route="/register" />
+        <SignIn route="/signin" />
         <ErrorHandler route="/ops" />
         <>
             { (me && me._id) ? <HelloWorldSecure route="/secured" /> : <ErrorHandlerPermission route="/secured" />}

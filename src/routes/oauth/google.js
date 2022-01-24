@@ -42,7 +42,7 @@ const oauth2callback = async (req, res, database, oAuth2Client, secrets) => {
         email: respauth.data.email,
         username: respauth.data.id,
       }
-      const { insertedId } = context.database.collection('users').insertOne(user)
+      const { insertedId } = await database.collection('users').insertOne(user)
       Object.assign(user, { _id: insertedId })
     }
 
@@ -58,7 +58,7 @@ const oauth2callback = async (req, res, database, oAuth2Client, secrets) => {
     // );
     // console.log('tokenInfo', tokenInfo);
 
-    return res.redirect('/success')
+    return res.redirect('/signin')
   } catch (error) {
     console.error("Unexpected error", error);
     return res.redirect('/ops')
