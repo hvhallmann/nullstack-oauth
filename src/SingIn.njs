@@ -29,7 +29,7 @@ class SingIn extends Nullstack {
   }
 
   static async signIn(data) {
-    const { database, request, email, password } = data
+    const { secrets, database, request, email, password } = data
 
     let errors = {}
 
@@ -52,7 +52,7 @@ class SingIn extends Nullstack {
       request.session.token = jwt.sign(userExists._id.toString(), secrets.session)
       delete userExists.password
       
-      return { user: userExists }
+      return { user: userExists, errors }
     }
 
 
@@ -75,7 +75,8 @@ class SingIn extends Nullstack {
       email: this.email,
       password: this.password,
     })
-  
+ 
+    
     if(Object.keys(response.errors).length > 0) {
       this.errors = response.errors
       return
@@ -83,6 +84,7 @@ class SingIn extends Nullstack {
 
     if(response.user) {
       context.me = { ...me, ...response.user, authMethod: 'credentials' }
+      context.router.path = '/success'
     }
   }
   

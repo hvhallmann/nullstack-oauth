@@ -114,9 +114,17 @@ class Register extends Nullstack {
   }
 
   static async createAccount(data) {
-    const { database, email, password, country } = data
+    const { database, email, password, country, request: { me } } = data
 
     //TODO: Validation before create in db
+
+    if(me?._id) {
+      const { modifiedCount } = await database.collection('users').updateOne(
+        { _id: me._id }, 
+        { $set : { country }}
+      )
+      return modifiedCount === 1
+    }
     
     const { insertedId } = await database.collection('users').insertOne({
       email,
