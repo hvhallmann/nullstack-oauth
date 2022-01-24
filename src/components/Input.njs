@@ -2,7 +2,7 @@ import Nullstack from 'nullstack';
 
 class Input extends Nullstack {
   
-  render({ label, name, value, error, labelHelper, ...rest }) {
+  render({ label, name, value = "", error, labelHelper, ...rest }) {
     return (
       <div class="flex flex-col">
         <div class="flex justify-between items-end">
