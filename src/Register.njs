@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs';
 
 import Input from './components/Input'
 import Button from './components/Button'
+import Select from './components/Select'
 import GoogleButton from './components/GoogleButton'
 
 class Register extends Nullstack {
@@ -251,26 +252,14 @@ class Register extends Nullstack {
   renderStepTwo() {
     return (
       <div class="w-full flex flex-col gap-4">
-        <div class="flex flex-col">
-          <div class="flex justify-between items-end">
-            <label class="bold mb-1">Country</label>
-            { this.errors.country && <small class="mb-1 text-red-500">{ this.errors.country }</small> }
-          </div>
-          <select bind={this.country} class="py-2 px-3 border border-gray-300 rounded-md">
-            <option value="">Select a Country</option>
-            { Object.keys(this.countryList).map(country => (
-              <option value={this.countryList[country]}>{ this.countryList[country] }</option>
-            )) }
-          </select>
-        </div>
-        <div class="flex flex-col">
-          <label class="bold mb-1">Other Question</label>
-          <input class="py-2 px-3 border border-gray-300 rounded-md" type="text"/>
-        </div>
-        <div class="flex flex-col">
-          <label class="bold mb-1">Other Question</label>
-          <input class="py-2 px-3 border border-gray-300 rounded-md" type="text"/>
-        </div>
+        <Select label="Country" error={this.errors.country} bind={this.country}>
+          <option value="">Select a Country</option>
+          { Object.keys(this.countryList).map(country => (
+            <option value={this.countryList[country]}>{ this.countryList[country] }</option>
+          )) }
+        </Select>
+        <Input label="Other Question" />
+        <Input label="Other Question" />
         <div class="flex justify-between">
           <Button onclick={this.handleStepTwoNext} >Next</Button>
         </div>
@@ -298,7 +287,7 @@ class Register extends Nullstack {
           <p>You will be able to connect more wallets in your account settings later</p>
         </div>
         <div class="flex justify-center">
-          <button onclick={this.handleCreateAccount} class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Create Account</button>
+          <Button onclick={this.handleCreateAccount} >Create Account</Button>
         </div>
       </div>
     )
