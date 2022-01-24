@@ -58,7 +58,7 @@ const oauth2callback = async (req, res, database, oAuth2Client, secrets) => {
     // );
     // console.log('tokenInfo', tokenInfo);
 
-    return res.redirect('/success')
+    return res.redirect('/register')
   } catch (error) {
     console.error("Unexpected error", error);
     return res.redirect('/ops')

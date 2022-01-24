@@ -1,9 +1,13 @@
 import Nullstack from 'nullstack';
 import { hash } from 'bcryptjs';
 
+import { OAuth2Client } from 'google-auth-library'
+
 class Register extends Nullstack {
 
   step = 1
+
+  errors = {}
 
   firstName = ''
   lastName = ''
@@ -16,13 +20,35 @@ class Register extends Nullstack {
   wallet = ''
 
   statusMessage = ''
+
+  googleAuthorizeUrl = ''
   
-  prepare() {
-    // your code goes here
+  prepare() {}
+
+  static async getGoogleAuthorizationUrl({ secrets }) {
+     const oAuth2Client = new OAuth2Client(
+      secrets.googleClientId,
+      secrets.googleClientSecret,
+      secrets.redirectUris
+    );
+    const authorizeUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+    });
+    return authorizeUrl
   }
   
-  async initiate() {
-    // your code goes here
+  async initiate({ me }) {
+    if(me?._id) {
+      this.email = me.email
+      
+      if(!me.country) {
+        this.step = 2
+      }
+    } else {
+      this.step = 1
+    }
+    this.googleAuthorizeUrl = await this.getGoogleAuthorizationUrl()
   }
   
   async hydrate() {
@@ -32,37 +58,37 @@ class Register extends Nullstack {
   static async createUser(data) {
     const {
       database,
-      // firstName,
-      // lastName,
       email,
-      username,
       password,
       passwordConfirmation
     } = data
 
-    // if(!firstName || firstName === '') {
-    //   return { error: "First name is required" }
-    // }
-    // if(!lastName || lastName === '') {
-    //   return { error: "Last name is required" }
-    // }
+    let errors = {}
+
     if(!email || email === '') {
-      return { error: "Email is required" }
+      errors = { ...errors, email: 'E-mail is required' }
+    } else {
+      const userExists = await database.collection('users').findOne({ email: email})
+      if(userExists) {
+        errors = { ...errors, email: 'E-mail already taken' }
+      }
     }
-    if(!username || username === '') {
-      return { error: "Username is required" }
+    if(!password || password === '') {
+      errors = { ...errors, password: "Invalid Format" }
     }
     if(password !== passwordConfirmation) {
-      return { error: "Password confirmation fail" }
+      errors = { ...errors, passwordConfirmation: "Password doesn't match" }
     }
 
-    return await database.collection('users').insertOne({
-      // firstName,
-      // lastName,
-      email,
-      username,
-      password: await hash(password, 10),
-    })
+    if(!!Object.keys(errors).length) return { errors }
+
+    // return await database.collection('users').insertOne({
+    //   // firstName,
+    //   // lastName,
+    //   email,
+    //   username,
+    //   password: await hash(password, 10),
+    // })
   }
 
   async handleCreateAccount({ router }) {
@@ -70,22 +96,21 @@ class Register extends Nullstack {
     this.statusMessage = ''
 
     const response = await this.createUser({
-      // firstName: this.firstName,
-      // lastName: this.lastName,
       email: this.email,
-      country: this.country,
-      username: this.username,
       password: this.password,
       passwordConfirmation: this.passwordConfirmation
     })
 
-    if(response.error) {
-      this.statusMessage = response.error
+    if(!!Object.keys(response.errors).length) {
+      this.errors = response.errors
       return
     }
 
-    this.statusMessage = 'New user created!'
-    router.path = '/success'
+    console.log(response)
+
+
+    // this.statusMessage = 'New user created!'
+    // router.path = '/success'
   }
 
   renderSteps() {
@@ -118,27 +143,37 @@ class Register extends Nullstack {
         <div class="flex flex-col">
           <div class="flex justify-between items-end">
             <label class="bold mb-1">Email*</label>
-            <small class="mb-1 text-gray-400 bold">0/50</small>
+            { this.errors.email 
+              ? <small class="mb-1 text-red-500">{ this.errors.email }</small>
+              : <small class="mb-1 text-gray-400 bold">{ this.email.length }/50</small>
+            }
           </div>
-          <input class="py-2 px-3 border border-gray-300 rounded-md" type="email" bind={this.email}/>
+          <input class="py-2 px-3 border border-gray-300 rounded-md" type="email" oninput={() => { 
+            if(this.email.length > 50) {
+              this.email = this.email.slice(0, 50)
+            }
+          }} bind={this.email}/>
         </div>
         <div class="flex flex-col">
           <div class="flex justify-between items-end">
             <label class="bold mb-1">Password</label>
-            <small class="mb-1 text-red-500">Invalid format.</small>
+            { this.errors.password && <small class="mb-1 text-red-500">{ this.errors.password }</small> }
           </div>
           <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.password}/>
         </div>
         <div class="flex flex-col">
-          <label class="bold mb-1">Confirm Password</label>
+          <div class="flex justify-between items-end">
+            <label class="bold mb-1">Confirm Password</label>
+            { this.errors.passwordConfirmation && <small class="mb-1 text-red-500">{ this.errors.passwordConfirmation }</small> }
+          </div>
           <input class="py-2 px-3 border border-gray-300 rounded-md" type="password" bind={this.passwordConfirmation}/>
         </div>
         <div>
           <p>You already have an account? <a class="text-sky-600" href="/login">Sign In</a></p>
         </div>
         <div class="flex justify-between">
-          <button onclick={{step: 2}} class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Sign Up</button>
-          <button class="flex flex-row items-center py-2 px-3 self-center border border-gray-300 rounded-md">
+          <button onclick={ this.handleCreateAccount } class="py-2 px-3 self-center bg-green-500 hover:bg-green-400 text-white rounded-md">Sign Up</button>
+          <a href={this.googleAuthorizeUrl} class="flex flex-row items-center py-2 px-3 self-center border border-gray-300 rounded-md">
             <svg class="mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
               <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
                 <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
@@ -149,7 +184,7 @@ class Register extends Nullstack {
               <script xmlns="" type="text/javascript" src="chrome-extension://hejbmebodbijjdhflfknehhcgaklhano/../window/testing-library.js"/>
             </svg>
             Sign up with Google
-          </button>
+          </a>
         </div>
       </div>
     )
