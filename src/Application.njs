@@ -64,7 +64,7 @@ class Application extends Nullstack {
 
   render({ router, me }) {
     return (
-      <main class="mx-24">
+      <main>
         <Head />
         { router.path !== '/oauth' && <Header /> }
         <Home route="/" />
