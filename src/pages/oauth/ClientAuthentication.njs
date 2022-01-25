@@ -37,7 +37,7 @@ class ClientAuthentication extends Nullstack {
     return(
       <div class="text-center">
         <p class="text-lg">Account information</p>
-        <div class="p-4">
+        <div class="p-4 mb-4">
           <p>
             <strong>Name</strong> { me.firstName } { me.lastName }
           </p>
@@ -45,42 +45,34 @@ class ClientAuthentication extends Nullstack {
             <strong>E-mail</strong> { me.email }
           </p>
         </div>
-        <br />
-        <br />
         <form action='/oauth/authorize' method="post">
           <input type="hidden" bind={this.client_id} />
           <input type="hidden" bind={this.redirect_uri} />
           <input type="hidden" bind={this.response_type} />
           <input type="hidden" bind={this.grant_type} />
           <input type="hidden" bind={this.state} />
-          <div class="items-center">
+          <div class="items-center mb-4">
             <ul class="text-left">
               <li>
-                <input type="checkbox" name="check_profile" bind={this.read_profile_data} >
-                  <label for="check_profile" class="font-['Poppins'] text-lg m-3">
-                    Permission to read your profile data
-                  </label>
-                </input>
+                <input type="checkbox" name="check_profile" bind={this.read_profile_data} />
+                <label for="check_profile" class="font-['Poppins'] text-lg m-3">
+                  Permission to read your profile data
+                </label>
               </li>
               <li>
-                <input type="checkbox" name="check_wallet" bind={this.read_wallet_address} >
-                  <label for="check_wallet" class="font-['Poppins'] text-lg m-3">
-                    Permission to read your wallet addresses
-                  </label>
-                </input>
+                <input type="checkbox" name="check_wallet" bind={this.read_wallet_address} />
+                <label for="check_wallet" class="font-['Poppins'] text-lg m-3">
+                  Permission to read your wallet addresses
+                </label>
               </li>
               <li>
-                <input type="checkbox" name="check_nfts" bind={this.read_user_nfts} >
-                  <label for="check_nfts" class="font-['Poppins'] text-lg m-3">
-                    Permission to read your nfts
-                  </label>
-                </input>
+                <input type="checkbox" name="check_nfts" bind={this.read_user_nfts} />
+                <label for="check_nfts" class="font-['Poppins'] text-lg m-3">
+                  Permission to read your nfts
+                </label>
               </li>
             </ul>
           </div>
-          <br />
-          <br />
-          <br />
           <button type="submit" class="px-3 py-2 bg-green-500 hover:bg-green-400 text-white rounded-md">Authorize</button>
           <button onclick={this.handleDecline} class="ml-6 px-3 py-2 hover:bg-gray-50 text-red-500 border-red-500 border rounded-md">Decline</button>
         </form>
