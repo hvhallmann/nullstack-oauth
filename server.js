@@ -38,7 +38,7 @@ server.use(async (request, response, next) => {
       const user = await context.database.collection('users').findOne({
         _id: ObjectId(id)
       });
-      delete user.password;
+      if(user?.password) delete user.password;
       request.me = {
         ...user
       };
