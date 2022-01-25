@@ -10,6 +10,7 @@ import ErrorHandlerPermission from "./ErrorHandlerPermission"
 
 import './tailwind.css'
 import SignIn from "./SignIn.njs";
+import Components from "./Components.njs";
 
 class Application extends Nullstack {
   
@@ -64,10 +65,12 @@ class Application extends Nullstack {
 
   render({ router, me }) {
     return (
-      <main class="mx-24">
+      // <main class="mx-24">
+      <main>
         <Head />
         { router.path !== '/oauth' && <Header /> }
         <Home route="/" />
+        <Components route="/components" />
         <ClientAuthentication route="/oauth" />
         <Register route="/register" />
         <SignIn route="/signin" />
