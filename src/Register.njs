@@ -234,7 +234,7 @@ class Register extends Nullstack {
             delete this.errors.password
           }}
         />
-        <Input type="passwordConfirmation" label="Confirm Password" bind={this.passwordConfirmation} error={this.errors.passwordConfirmation} oninput={() => { 
+        <Input type="password" label="Confirm Password" bind={this.passwordConfirmation} error={this.errors.passwordConfirmation} oninput={() => { 
             delete this.errors.passwordConfirmation
           }}
         />
