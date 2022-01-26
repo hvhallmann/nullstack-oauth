@@ -10,7 +10,8 @@ import ErrorHandlerPermission from "./ErrorHandlerPermission"
 
 import './tailwind.css'
 import SignIn from "./SignIn.njs";
-import Components from "./Components.njs";
+import Collections from "./Collections";
+import StoreCollections from "./pages/Collections";
 
 class Application extends Nullstack {
   
@@ -57,9 +58,14 @@ class Application extends Nullstack {
 
   renderHeader({me}) {
     return (
-      <div class="flex w-full py-3 px-6">
-        { me && me._id && <a onclick={this.logout} class="ml-auto" href="#">Logout</a> }
-      </div>
+      <>
+      { me && me._id &&  (  
+        <div class="flex w-full py-3 px-6">
+          <a onclick={this.logout} class="ml-auto" href="#">Logout</a>
+        </div>
+        )
+      }
+      </>
     )
   }
 
@@ -72,6 +78,8 @@ class Application extends Nullstack {
         <Home route="/" />
         <Components route="/components" />
         <ClientAuthentication route="/oauth" />
+        <Collections route="/collections" />
+        <StoreCollections route="/store/collections" />
         <Register route="/register" />
         <SignIn route="/signin" />
         <ErrorHandler route="/ops" />
